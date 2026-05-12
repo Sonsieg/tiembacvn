@@ -1402,3 +1402,4 @@ Khi config Supabase sau, chỉ cần thay env là có thể dùng.
 ## 19. Yêu cầu cuối cùng
 
 Tạo website **Tiembac.vn** hoàn chỉnh, tiếng Việt, luxury ecommerce, bán trang sức bạc, dùng Next.js + Supabase, guest checkout, cart drawer, admin dashboard, product management, order management, inventory reserve, product video YouTube config, SEO-ready, responsive, production-ready architecture.
+# tiembacvn
