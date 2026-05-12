@@ -1,13 +1,17 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Camera, Mail, MapPin, Music2, Phone } from "lucide-react";
 import { siteConfig } from "@/lib/constants/site";
+import logoImage from "@/assets/thumnail.png";
 
 export function Footer() {
   return (
     <footer className="border-t border-navy-soft bg-navy text-ivory">
       <div className="container-page grid gap-10 py-14 md:grid-cols-[1.35fr_1fr_1fr_1fr]">
         <div>
-          <h2 className="font-display text-4xl font-medium tracking-[.08em]">Tiembac.vn</h2>
+          <Link href="/" className="inline-flex" aria-label="Tiembac.vn">
+            <Image src={logoImage} alt="Tiembac.vn" className="h-12 w-auto object-contain" />
+          </Link>
           <p className="mt-4 max-w-sm text-sm leading-7 text-ivory/72">{siteConfig.description}</p>
           <div className="mt-5 flex gap-2">
             <a aria-label="Instagram" href="#" className="grid h-10 w-10 place-items-center rounded-sm border border-ivory/18 bg-white/5 text-cta transition hover:border-cta hover:bg-cta/10"><Camera className="h-4 w-4" /></a>

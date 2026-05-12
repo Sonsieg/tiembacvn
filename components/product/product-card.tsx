@@ -6,10 +6,9 @@ import { motion } from "framer-motion";
 import type { Product } from "@/types/commerce";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Price } from "@/components/ui/price";
 import { useCartStore } from "@/store/cart.store";
 import { useFavoriteStore } from "@/store/favorite.store";
-import { cn } from "@/lib/utils/format";
+import { cn, formatCurrency } from "@/lib/utils/format";
 
 export function ProductCard({ product }: { product: Product }) {
   const variant = product.variants[0];
@@ -20,7 +19,7 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <motion.article
-      className="group grid h-full overflow-hidden rounded-sm border border-line bg-pearl text-slate shadow-soft transition duration-300 hover:-translate-y-1 hover:border-cta/60"
+      className="group grid self-start overflow-hidden rounded-sm border border-line bg-pearl text-slate shadow-soft transition duration-300 hover:-translate-y-1 hover:border-cta/60"
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
@@ -42,22 +41,29 @@ export function ProductCard({ product }: { product: Product }) {
           <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
         </button>
       </Link>
-      <div className="grid min-h-[220px] content-start gap-3 p-4 md:p-5">
-        <div className="grid gap-1">
-          <Link href={`/products/${product.slug}`} className="line-clamp-2 font-display text-2xl font-medium leading-tight text-slate hover:text-cta">
+      <div className="flex h-[250px] flex-col p-4 md:p-5">
+        <div className="grid gap-2">
+          <Link href={`/products/${product.slug}`} className="line-clamp-2 min-h-[3.55rem] font-display text-2xl font-medium leading-[1.18] text-slate hover:text-cta">
             {product.title}
           </Link>
-          <p className="text-[11px] uppercase tracking-[.22em] text-slate-muted">{product.material} · Đã bán</p>
+          <p className="h-4 truncate text-[11px] uppercase leading-4 tracking-[.22em] text-slate-muted">{product.material} · Đã bán</p>
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <Price value={variant.price} compareAt={variant.compareAtPrice} />
-          <span className={cn("text-xs font-bold uppercase tracking-[.12em]", sellable <= 0 ? "text-slate-light" : sellable <= 3 ? "text-warning" : "text-success")}>
+        <div className="mt-5 grid min-h-[54px] grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+          <div className="grid min-w-0 gap-1">
+            <span className="whitespace-nowrap text-lg font-semibold leading-none text-cta">{formatCurrency(variant.price)}</span>
+            {variant.compareAtPrice ? (
+              <span className="whitespace-nowrap text-sm leading-none text-slate-light line-through">{formatCurrency(variant.compareAtPrice)}</span>
+            ) : (
+              <span className="h-4" aria-hidden="true" />
+            )}
+          </div>
+          <span className={cn("pt-1 whitespace-nowrap text-xs font-bold uppercase tracking-[.12em]", sellable <= 0 ? "text-slate-light" : sellable <= 3 ? "text-warning" : "text-success")}>
             {sellable <= 0 ? "Hết hàng" : sellable <= 3 ? `Chỉ còn ${sellable}` : "Còn hàng"}
           </span>
         </div>
         <Button
           variant="secondary"
-          className="mt-auto w-full"
+          className="mt-auto h-12 w-full"
           disabled={sellable <= 0}
           onClick={() =>
             addItem({

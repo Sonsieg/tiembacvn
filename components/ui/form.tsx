@@ -1,9 +1,10 @@
 import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { forwardRef } from "react";
 import { cn } from "@/lib/utils/format";
 
-export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn("h-11 w-full rounded-sm border border-input-border bg-input px-4 text-sm text-slate outline-none transition placeholder:text-slate-light focus:border-cta focus:ring-2 focus:ring-cta/20", className)} {...props} />;
-}
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...props }, ref) {
+  return <input ref={ref} className={cn("h-11 w-full rounded-sm border border-input-border bg-input px-4 text-sm text-slate outline-none transition placeholder:text-slate-light focus:border-cta focus:ring-2 focus:ring-cta/20", className)} {...props} />;
+});
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea className={cn("min-h-28 w-full rounded-sm border border-input-border bg-input px-4 py-3 text-sm text-slate outline-none transition placeholder:text-slate-light focus:border-cta focus:ring-2 focus:ring-cta/20", className)} {...props} />;

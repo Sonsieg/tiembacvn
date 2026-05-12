@@ -8,11 +8,20 @@ import { ProductCard } from "@/components/product/product-card";
 import { useFilterStore } from "@/store/filter.store";
 import { ActiveFiltersBar, FilterDrawer, FilterSidebar, SortSelect } from "@/components/filter/filter-components";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function CollectionBrowser({ products, categories }: { products: Product[]; categories: Category[] }) {
   const [page, setPage] = useState(1);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { search, categories: selectedCategories, priceRange, materials, sizes, styles, occasions, statuses, sort, setSearch, resetFilters } = useFilterStore();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("focus") === "search") {
+      searchInputRef.current?.focus();
+    }
+  }, []);
+
   const filtered = products
     .filter((product) => (search ? product.title.toLowerCase().includes(search.toLowerCase()) : true))
     .filter((product) => (selectedCategories.length ? selectedCategories.some((category) => product.categorySlugs.includes(category)) : true))
@@ -52,14 +61,14 @@ export function CollectionBrowser({ products, categories }: { products: Product[
   const pageProducts = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
+    <div className="grid items-start gap-6 lg:grid-cols-[300px_1fr]">
       <FilterSidebar categories={categories} />
-      <div className="grid gap-5">
-        <div className="rounded-sm border border-line bg-pearl p-3 shadow-soft">
-          <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+      <div className="grid content-start gap-5">
+        <div className="self-start rounded-sm border border-line bg-pearl p-3 shadow-soft">
+          <div className="grid gap-3 md:grid-cols-[minmax(260px,1fr)_220px_auto_auto] lg:grid-cols-[minmax(260px,1fr)_220px_auto]">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-light" />
-              <Input className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm nhẫn, dây chuyền, vòng tay..." />
+              <Input ref={searchInputRef} className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm nhẫn, dây chuyền, vòng tay..." />
             </div>
             <SortSelect />
             <FilterDrawer categories={categories} />

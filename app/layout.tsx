@@ -24,6 +24,13 @@ export const metadata: Metadata = {
     title: "Tiembac.vn — Trang sức bạc S925 tối giản cao cấp",
     description: siteConfig.description,
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({

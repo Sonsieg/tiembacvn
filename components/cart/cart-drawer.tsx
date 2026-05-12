@@ -18,8 +18,21 @@ export function CartDrawer() {
   return (
     <AnimatePresence>
       {isOpen ? (
-        <motion.div className="fixed inset-0 z-50 bg-navy/45 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <motion.aside className="ml-auto flex h-full w-full max-w-md flex-col border-l border-line bg-drawer text-slate shadow-premium" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 260 }}>
+        <motion.div
+          className="fixed inset-0 z-50 bg-navy/45 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={closeCart}
+        >
+          <motion.aside
+            className="ml-auto flex h-full w-full max-w-md flex-col border-l border-line bg-drawer text-slate shadow-premium"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 260 }}
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-line bg-pearl/90 p-5 backdrop-blur">
               <div>
                 <p className="eyebrow">Giỏ hàng</p>

@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock } from "lucide-react";
+import { Eye, EyeOff, Lock, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import Image from "next/image";
+import logoMark from "@/assets/logo.png";
 
 type LoginStyles = Record<string, string>;
 
 export function AdminLoginForm({ styles }: { styles: LoginStyles }) {
   const router = useRouter();
-  const [username, setUsername] = useState("admin");
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const [username, setUsername] = useState(isDevelopment ? "admin" : "");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -38,25 +42,44 @@ export function AdminLoginForm({ styles }: { styles: LoginStyles }) {
 
   return (
     <form onSubmit={submit}>
-      <div className={styles.mark}>
-        <Lock size={22} strokeWidth={2.4} />
+      <div className={styles.markRow}>
+        <span />
+        <div className={styles.mark} style={{ backgroundColor: "transparent", border: "none", boxShadow: "none" }}>
+           <Image src={logoMark} alt="" priority style={{ objectFit: "contain", width: "90px", height: "auto" }} />
+        </div>
+        <span />
       </div>
-      <p className={styles.eyebrow}>Tiembac Admin</p>
-      <h1 className={styles.title}>Đăng nhập quản trị</h1>
-      <p className={styles.description}>Dùng tài khoản admin nội bộ để vào dashboard.</p>
+      <p className={styles.eyebrow}>Tiembac.vn Admin</p>
+      <h1 className={styles.title}>Đăng nhập</h1>
+      <div className={styles.titleDivider}><Sparkles size={18} /></div>
+      <p className={styles.description}>Chào mừng bạn trở lại! Vui lòng đăng nhập để tiếp tục quản trị hệ thống Tiembac.vn.</p>
       <div className={styles.form}>
         <label className={styles.field}>
-          Tài khoản
-          <input className={styles.input} value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" />
+          Email hoặc tài khoản
+          <span className={styles.inputWrap}>
+            <UserRound size={22} />
+            <input className={styles.input} value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Nhập email hoặc tài khoản" autoComplete="username" />
+          </span>
         </label>
         <label className={styles.field}>
           Mật khẩu
-          <input className={styles.input} value={password} onChange={(event) => setPassword(event.target.value)} type="password" placeholder="xinchaobro123" autoComplete="current-password" />
+          <span className={styles.inputWrap}>
+            <Lock size={22} />
+            <input className={styles.input} value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? "text" : "password"} placeholder="Nhập mật khẩu" autoComplete="current-password" />
+            <button type="button" className={styles.eyeButton} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} onClick={() => setShowPassword((value) => !value)}>
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </span>
         </label>
         {error ? <p className={styles.error}>{error}</p> : null}
         <button className={styles.button} disabled={loading}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</button>
       </div>
-      <p className={styles.hint}>Dev account: admin / xinchaobro123</p>
+      {isDevelopment ? (
+        <p className={styles.hint}>
+          <ShieldCheck size={24} />
+          <span><strong>Dev account: admin / xinchaobro123</strong>Tài khoản chỉ sử dụng cho môi trường phát triển.</span>
+        </p>
+      ) : null}
     </form>
   );
 }

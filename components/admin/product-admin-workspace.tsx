@@ -190,11 +190,11 @@ function ProductCardRow({ product, selected, onSelect, onView, onEdit }: { produ
 function QuickActions({ onView, onEdit, onArchive }: { onView: () => void; onEdit: () => void; onArchive: () => void }) {
   return (
     <div className="flex items-center gap-1">
-      <button type="button" className="admin-icon-button" onClick={onView} aria-label="Xem"><Eye className="h-4 w-4" /></button>
-      <button type="button" className="admin-icon-button" onClick={onEdit} aria-label="Sửa"><Pencil className="h-4 w-4" /></button>
-      <button type="button" className="admin-icon-button" aria-label="Nhân bản"><Copy className="h-4 w-4" /></button>
-      <button type="button" className="admin-icon-button" onClick={onArchive} aria-label="Lưu trữ"><Archive className="h-4 w-4" /></button>
-      <button type="button" className="admin-icon-button" aria-label="Thêm"><MoreHorizontal className="h-4 w-4" /></button>
+      <button type="button" className="admin-icon-button" onClick={onView} aria-label="Xem" title="Xem nhanh"><Eye className="h-4 w-4" /></button>
+      <button type="button" className="admin-icon-button" onClick={onEdit} aria-label="Sửa" title="Sửa sản phẩm"><Pencil className="h-4 w-4" /></button>
+      <button type="button" className="admin-icon-button" aria-label="Nhân bản" title="Nhân bản sản phẩm"><Copy className="h-4 w-4" /></button>
+      <button type="button" className="admin-icon-button" onClick={onArchive} aria-label="Lưu trữ" title="Ẩn hoặc lưu trữ"><Archive className="h-4 w-4" /></button>
+      <button type="button" className="admin-icon-button" aria-label="Thêm" title="Thao tác khác"><MoreHorizontal className="h-4 w-4" /></button>
     </div>
   );
 }

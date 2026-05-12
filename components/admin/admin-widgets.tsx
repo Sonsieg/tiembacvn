@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/form";
+import { AdminDropdown } from "@/components/admin/admin-dropdown";
 import { AdminDrawer } from "@/components/admin/shared/admin-overlays";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { Order, Product } from "@/types/commerce";
@@ -15,21 +18,79 @@ export function StatCard({ label, value, hint }: { label: string; value: string;
 
 export function OrdersTable({ orders }: { orders: Order[] }) {
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("all");
+  const [payment, setPayment] = useState("all");
+  const filtered = orders.filter((order) => {
+    const haystack = `${order.orderNumber} ${order.customer.fullName} ${order.customer.phone}`.toLowerCase();
+    return (!query || haystack.includes(query.toLowerCase()))
+      && (status === "all" || order.orderStatus === status)
+      && (payment === "all" || order.paymentStatus === payment);
+  });
   return (
     <>
-      <Card className="overflow-x-auto p-4">
-        <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="text-gray-500"><tr><th className="p-3">Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái đơn</th><th>Thanh toán</th><th>Cập nhật</th><th>Ngày tạo</th></tr></thead>
-          <tbody>
-            {orders.map((order) => <tr key={order.id} className="border-t border-silver-200 hover:bg-sky-50/45"><td className="p-3"><button className="font-medium text-ink" onClick={() => setActiveOrder(order)}>{order.orderNumber}</button></td><td>{order.customer.fullName}<br /><span className="text-gray-500">{order.customer.phone}</span></td><td>{formatCurrency(order.grandTotal)}</td><td><Badge>{order.orderStatus}</Badge></td><td><Badge>{order.paymentStatus}</Badge></td><td><select defaultValue={order.orderStatus} aria-label="Chuyển trạng thái đơn"><option value="pending">Chờ xác nhận</option><option value="confirmed">Đã xác nhận</option><option value="processing">Đang xử lý</option><option value="shipped">Đã gửi hàng</option><option value="completed">Hoàn tất</option><option value="cancelled">Đã hủy</option></select></td><td>{formatDate(order.createdAt)}</td></tr>)}
-          </tbody>
-        </table>
-      </Card>
+      <div className="grid gap-4">
+        <div className="grid gap-3 border-b border-line p-4 lg:grid-cols-[1fr_190px_190px]">
+          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm mã đơn, khách hàng, số điện thoại..." />
+          <AdminDropdown ariaLabel="Lọc trạng thái đơn" value={status} onChange={setStatus} options={[
+            { value: "all", label: "Tất cả trạng thái" },
+            { value: "pending", label: "Chờ xác nhận" },
+            { value: "confirmed", label: "Đã xác nhận" },
+            { value: "processing", label: "Đang xử lý" },
+            { value: "shipped", label: "Đã gửi hàng" },
+            { value: "completed", label: "Hoàn tất" },
+            { value: "cancelled", label: "Đã hủy" },
+          ]} />
+          <AdminDropdown ariaLabel="Lọc thanh toán" value={payment} onChange={setPayment} options={[
+            { value: "all", label: "Tất cả thanh toán" },
+            { value: "pending", label: "Chờ thanh toán" },
+            { value: "paid", label: "Đã thanh toán" },
+            { value: "failed", label: "Thất bại" },
+            { value: "refunded", label: "Đã hoàn tiền" },
+          ]} />
+        </div>
+        <div className="overflow-x-auto px-4 pb-4">
+          <table className="w-full min-w-[860px] text-left text-sm">
+            <thead className="text-slate-muted"><tr><th className="p-3">Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thanh toán</th><th>Cập nhật nhanh</th><th>Ngày tạo</th></tr></thead>
+            <tbody>
+              {filtered.map((order) => (
+                <tr key={order.id} className="border-t border-line hover:bg-ivory-soft/70">
+                  <td className="p-3"><button className="font-semibold text-navy hover:text-cta" onClick={() => setActiveOrder(order)}>{order.orderNumber}</button></td>
+                  <td>{order.customer.fullName}<br /><span className="text-slate-muted">{order.customer.phone}</span></td>
+                  <td className="font-semibold">{formatCurrency(order.grandTotal)}</td>
+                  <td><StatusBadge tone={order.orderStatus}>{order.orderStatus}</StatusBadge></td>
+                  <td><StatusBadge tone={order.paymentStatus}>{order.paymentStatus}</StatusBadge></td>
+                  <td><AdminDropdown ariaLabel="Chuyển trạng thái đơn" value={order.orderStatus} options={[
+                    { value: "pending", label: "Chờ xác nhận" },
+                    { value: "confirmed", label: "Đã xác nhận" },
+                    { value: "processing", label: "Đang xử lý" },
+                    { value: "shipped", label: "Đã gửi hàng" },
+                    { value: "completed", label: "Hoàn tất" },
+                    { value: "cancelled", label: "Đã hủy" },
+                  ]} /></td>
+                  <td>{formatDate(order.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
       <AdminDrawer open={Boolean(activeOrder)} title="Chi tiết đơn hàng" description="Xem nhanh và cập nhật đơn mà không rời khỏi danh sách." onClose={() => setActiveOrder(null)} width="max-w-2xl" footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setActiveOrder(null)}>Đóng</Button><Button>Ghi chú / cập nhật</Button></div>}>
         {activeOrder ? <OrderDetail order={activeOrder} /> : null}
       </AdminDrawer>
     </>
   );
+}
+
+function StatusBadge({ children, tone }: { children: ReactNode; tone: string }) {
+  const className = tone === "cancelled" || tone === "failed"
+    ? "border-danger/25 bg-danger/10 text-danger"
+    : tone === "pending"
+      ? "border-warning/25 bg-warning/10 text-warning"
+      : tone === "paid" || tone === "completed"
+        ? "border-success/25 bg-success/10 text-success"
+        : "border-cta/25 bg-cta-soft text-navy";
+  return <Badge className={className}>{children}</Badge>;
 }
 
 function OrderDetail({ order }: { order: Order }) {
