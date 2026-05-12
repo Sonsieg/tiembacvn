@@ -10,10 +10,10 @@ type BaseProps = {
 };
 
 const variants = {
-  primary: "bg-claret text-white shadow-premium hover:bg-claret-700",
-  secondary: "border border-silver-300 bg-white/80 text-claret hover:border-sky-300 hover:bg-sky-50",
-  ghost: "text-claret hover:bg-claret/5",
-  dark: "bg-ink text-white hover:bg-claret",
+  primary: "border border-cta bg-cta text-cta-text shadow-none hover:border-cta-hover hover:bg-cta-hover",
+  secondary: "border border-line bg-pearl text-slate hover:border-cta hover:bg-cta-soft/35 hover:text-navy",
+  ghost: "border border-transparent text-slate hover:bg-cta-soft/35 hover:text-navy",
+  dark: "border border-navy bg-navy text-copy-inverse hover:border-navy-soft hover:bg-navy-soft",
 };
 
 const sizes = {
@@ -26,7 +26,7 @@ const sizes = {
 export function Button({ variant = "primary", size = "md", className, ...props }: BaseProps & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={cn("inline-flex items-center justify-center gap-2 rounded-full font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-50", variants[variant], sizes[size], className)}
+      className={cn("inline-flex items-center justify-center gap-2 rounded-sm font-bold uppercase tracking-[.12em] transition focus:outline-none focus:ring-2 focus:ring-cta/35 disabled:cursor-not-allowed disabled:opacity-50", variants[variant], sizes[size], className)}
       {...props}
     />
   );
@@ -36,7 +36,7 @@ export function ButtonLink({ variant = "primary", size = "md", className, href, 
   return (
     <Link
       href={href}
-      className={cn("inline-flex items-center justify-center gap-2 rounded-full font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-300", variants[variant], sizes[size], className)}
+      className={cn("inline-flex items-center justify-center gap-2 rounded-sm font-bold uppercase tracking-[.12em] transition focus:outline-none focus:ring-2 focus:ring-cta/35", variants[variant], sizes[size], className)}
       {...props}
     />
   );

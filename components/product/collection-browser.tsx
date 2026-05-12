@@ -1,60 +1,117 @@
 "use client";
 
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 import type { Category, Product } from "@/types/commerce";
-import { Input, Select } from "@/components/ui/form";
+import { Input } from "@/components/ui/form";
 import { ProductGrid } from "@/components/product/product-grid";
+import { ProductCard } from "@/components/product/product-card";
 import { useFilterStore } from "@/store/filter.store";
+import { ActiveFiltersBar, FilterDrawer, FilterSidebar, SortSelect } from "@/components/filter/filter-components";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export function CollectionBrowser({ products, categories }: { products: Product[]; categories: Category[] }) {
-  const { search, category, sort, setSearch, setCategory, setSort } = useFilterStore();
+  const [page, setPage] = useState(1);
+  const { search, categories: selectedCategories, priceRange, materials, sizes, styles, occasions, statuses, sort, setSearch, resetFilters } = useFilterStore();
   const filtered = products
     .filter((product) => (search ? product.title.toLowerCase().includes(search.toLowerCase()) : true))
-    .filter((product) => (category ? product.categorySlugs.includes(category) : true))
+    .filter((product) => (selectedCategories.length ? selectedCategories.some((category) => product.categorySlugs.includes(category)) : true))
+    .filter((product) => {
+      const prices = product.variants.map((variant) => variant.price);
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      return max >= priceRange[0] && min <= priceRange[1];
+    })
+    .filter((product) => (materials.length ? materials.some((material) => product.material.toLowerCase().includes(material.toLowerCase().replace("bạc ", "")) || product.material === material) : true))
+    .filter((product) => (sizes.length ? product.variants.some((variant) => sizes.includes(variant.title) || sizes.includes(variant.size ?? "")) : true))
+    .filter((product) => (styles.length ? styles.some((style) => matchesProductTerm(product, style)) : true))
+    .filter((product) => (occasions.length ? occasions.some((occasion) => matchesProductTerm(product, occasion)) : true))
+    .filter((product) => {
+      if (!statuses.length) return true;
+      const sellable = product.variants.reduce((sum, variant) => sum + variant.inventory.quantityAvailable - variant.inventory.quantityReserved, 0);
+      return statuses.some((status) => {
+        if (status === "Còn hàng") return sellable > 0;
+        if (status === "Đang sale") return product.variants.some((variant) => variant.compareAtPrice && variant.compareAtPrice > variant.price);
+        if (status === "Hàng mới") return product.newArrival;
+        if (status === "Bán chạy") return product.bestSeller;
+        return true;
+      });
+    })
     .sort((a, b) => {
       if (sort === "price-asc") return a.variants[0].price - b.variants[0].price;
       if (sort === "price-desc") return b.variants[0].price - a.variants[0].price;
       if (sort === "rating") return b.rating - a.rating;
+      if (sort === "sale") return Number(Boolean(b.variants[0].compareAtPrice)) - Number(Boolean(a.variants[0].compareAtPrice));
       if (sort === "best") return Number(b.bestSeller) - Number(a.bestSeller);
       return Number(b.newArrival) - Number(a.newArrival);
     });
 
+  const pageSize = 9;
+  const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
+  const currentPage = Math.min(page, totalPages);
+  const pageProducts = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-      <aside className="hidden rounded-[2rem] border border-silver-200 bg-white p-5 shadow-soft lg:block">
-        <div className="mb-4 flex items-center gap-2 font-semibold text-ink"><SlidersHorizontal className="h-4 w-4" /> Bộ lọc</div>
-        <div className="grid gap-4">
-          <label className="grid gap-2 text-sm font-medium">Loại sản phẩm
-            <Select value={category} onChange={(event) => setCategory(event.target.value)}>
-              <option value="">Tất cả</option>
-              {categories.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}
-            </Select>
-          </label>
-          <FilterPill label="Chất liệu" value="Bạc S925" />
-          <FilterPill label="Phong cách" value="Thanh lịch · Tối giản · Quà tặng" />
-          <FilterPill label="Tồn kho" value="Còn hàng, sắp hết hàng" />
-        </div>
-      </aside>
+    <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
+      <FilterSidebar categories={categories} />
       <div className="grid gap-5">
-        <div className="grid gap-3 rounded-[2rem] border border-silver-200 bg-white p-3 shadow-soft sm:grid-cols-[1fr_220px]">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm nhẫn, dây chuyền, vòng tay..." />
+        <div className="rounded-sm border border-line bg-pearl p-3 shadow-soft">
+          <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-light" />
+              <Input className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm nhẫn, dây chuyền, vòng tay..." />
+            </div>
+            <SortSelect />
+            <FilterDrawer categories={categories} />
+            <Button type="button" variant="ghost" onClick={resetFilters} className="hidden md:inline-flex">Xóa lọc</Button>
           </div>
-          <Select value={sort} onChange={(event) => setSort(event.target.value)}>
-            <option value="newest">Mới nhất</option>
-            <option value="price-asc">Giá thấp đến cao</option>
-            <option value="price-desc">Giá cao đến thấp</option>
-            <option value="best">Bán chạy</option>
-            <option value="rating">Đánh giá cao</option>
-          </Select>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <ActiveFiltersBar categories={categories} />
+            <span className="text-xs font-bold uppercase tracking-[.16em] text-slate-muted">{filtered.length} sản phẩm</span>
+          </div>
         </div>
-        <ProductGrid products={filtered} />
+        {pageProducts.length ? (
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {pageProducts.map((product) => <ProductCard key={product.id} product={product} />)}
+          </div>
+        ) : <ProductGrid products={[]} />}
+        <CatalogPagination page={currentPage} totalPages={totalPages} onPage={setPage} />
       </div>
     </div>
   );
 }
 
-function FilterPill({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-2xl bg-pearl p-4 text-sm"><b className="block text-ink">{label}</b><span className="text-gray-500">{value}</span></div>;
+function CatalogPagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (page: number) => void }) {
+  return (
+    <nav className="mt-8 flex items-center justify-center gap-3 border-t border-line pt-8 text-[11px] font-bold uppercase tracking-[.18em] text-slate-muted" aria-label="Phân trang sản phẩm">
+      {Array.from({ length: totalPages }, (_, index) => index + 1).map((item) => (
+        <button key={item} type="button" onClick={() => onPage(item)} className={item === page ? "text-cta" : "hover:text-slate"}>
+          {String(item).padStart(2, "0")}
+        </button>
+      ))}
+      <button type="button" onClick={() => onPage(Math.min(page + 1, totalPages))} className="ml-3 hover:text-cta">Tiếp</button>
+    </nav>
+  );
+}
+
+function matchesProductTerm(product: Product, term: string) {
+  const value = term.toLowerCase();
+  const haystack = [
+    product.title,
+    product.shortDescription,
+    product.description,
+    product.material,
+    ...product.tags,
+    ...product.categorySlugs,
+    ...product.collectionSlugs,
+  ].join(" ").toLowerCase();
+
+  if (value === "tối giản") return haystack.includes("minimal") || haystack.includes("tối giản");
+  if (value === "sang trọng") return haystack.includes("signature") || haystack.includes("đá") || haystack.includes("opal") || haystack.includes("ngọc");
+  if (value === "dễ thương") return haystack.includes("charm") || haystack.includes("tim") || haystack.includes("ngôi sao");
+  if (value === "vintage") return haystack.includes("đá màu") || haystack.includes("claret");
+  if (value === "sinh nhật" || value === "kỷ niệm" || value === "valentine" || value === "quà cho nàng" || value === "quà cho mẹ") return product.giftWrap || haystack.includes("quà");
+  if (value === "dùng hằng ngày") return haystack.includes("đi làm") || haystack.includes("minimal") || haystack.includes("tối giản");
+
+  return haystack.includes(value);
 }

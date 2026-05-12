@@ -34,19 +34,19 @@ export function TrackOrderForm({ initialOrder }: { initialOrder?: string }) {
         <form onSubmit={submit} className="grid gap-4">
           <Field label="Mã đơn hàng"><Input value={orderNumber} onChange={(event) => setOrderNumber(event.target.value)} placeholder="TB20260512001" /></Field>
           <Field label="Email hoặc số điện thoại"><Input value={emailOrPhone} onChange={(event) => setEmailOrPhone(event.target.value)} placeholder="email@sdt" /></Field>
-          {error ? <p className="rounded-2xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
+          {error ? <p className="rounded-sm border border-claret/40 bg-claret/10 p-3 text-sm text-claret">{error}</p> : null}
           <Button><PackageSearch className="h-4 w-4" /> Tra cứu</Button>
         </form>
       </Card>
       <Card className="min-h-80 p-5">
         {order ? (
           <div className="grid gap-5">
-            <div><p className="eyebrow">Đơn hàng {order.orderNumber}</p><h2 className="text-2xl font-semibold text-ink">{formatCurrency(order.grandTotal)}</h2><p className="text-sm text-gray-500">{order.paymentStatus === "paid" ? "Đã thanh toán" : "Chờ thanh toán"} · {order.fulfillmentStatus}</p></div>
+            <div><p className="eyebrow">Đơn hàng {order.orderNumber}</p><h2 className="text-2xl font-semibold text-foreground">{formatCurrency(order.grandTotal)}</h2><p className="text-sm text-gray-500">{order.paymentStatus === "paid" ? "Đã thanh toán" : "Chờ thanh toán"} · {order.fulfillmentStatus}</p></div>
             <div className="grid gap-3">
-              {order.timeline.map((item) => <div key={item.at} className="border-l-2 border-claret pl-4"><b className="text-ink">{item.label}</b><p className="text-sm text-gray-500">{formatDate(item.at)}</p></div>)}
+              {order.timeline.map((item) => <div key={item.at} className="border-l-2 border-claret pl-4"><b className="text-foreground">{item.label}</b><p className="text-sm text-gray-500">{formatDate(item.at)}</p></div>)}
             </div>
             <div className="grid gap-3">
-              {order.items.map((item) => <div key={item.variantId} className="flex gap-3 rounded-2xl bg-pearl p-3"><img src={item.image} alt={item.title} className="h-14 w-14 rounded-xl object-cover" /><div className="flex-1"><b>{item.title}</b><p className="text-sm text-gray-500">{item.variantTitle} x {item.quantity}</p></div><b>{formatCurrency(item.totalPrice)}</b></div>)}
+              {order.items.map((item) => <div key={item.variantId} className="flex gap-3 rounded-sm border border-silver-200 bg-white/5 p-3"><img src={item.image} alt={item.title} className="h-14 w-14 rounded-sm object-cover" /><div className="flex-1"><b>{item.title}</b><p className="text-sm text-gray-500">{item.variantTitle} x {item.quantity}</p></div><b>{formatCurrency(item.totalPrice)}</b></div>)}
             </div>
             <p className="text-sm text-gray-600">Giao đến: {order.address.addressLine}, {order.address.ward}, {order.address.district}, {order.address.province}</p>
           </div>

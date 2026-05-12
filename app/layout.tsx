@@ -5,17 +5,24 @@ import { siteConfig } from "@/lib/constants/site";
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Tiembac.vn — Trang sức bạc S925 cao cấp",
+    default: "Tiembac.vn — Trang sức bạc S925 tối giản cao cấp",
     template: "%s | Tiembac.vn",
   },
   description: siteConfig.description,
+  keywords: ["trang sức bạc", "bạc S925", "nhẫn bạc", "dây chuyền bạc", "vòng tay bạc", "khuyên tai bạc"],
   openGraph: {
-    title: "Tiembac.vn",
+    title: "Tiembac.vn — Trang sức bạc S925 tối giản cao cấp",
     description: siteConfig.description,
     url: siteConfig.url,
     siteName: "Tiembac.vn",
     locale: "vi_VN",
     type: "website",
+    images: ["/og-image.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tiembac.vn — Trang sức bạc S925 tối giản cao cấp",
+    description: siteConfig.description,
   },
 };
 

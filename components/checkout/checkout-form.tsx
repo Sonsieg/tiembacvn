@@ -73,11 +73,11 @@ export function CheckoutForm() {
         </Panel>
         <Panel title="Giao hàng & thanh toán">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-ink"><PackageCheck className="mb-2 h-5 w-5 text-sky-700" /> Giao hàng tiêu chuẩn, miễn phí nếu đạt ngưỡng.</div>
+            <div className="rounded-sm border border-silver-200 bg-white/5 p-4 text-sm text-foreground"><PackageCheck className="mb-2 h-5 w-5 text-claret" /> Giao hàng tiêu chuẩn, miễn phí nếu đạt ngưỡng. Không cần đăng nhập để mua hàng.</div>
             <Field label="Phương thức thanh toán"><Select {...form.register("paymentMethod")}><option value="cod">COD</option><option value="bank_transfer">Chuyển khoản ngân hàng</option><option value="online">Thanh toán online placeholder</option></Select></Field>
           </div>
         </Panel>
-        {error ? <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
+        {error ? <div className="rounded-sm border border-claret/40 bg-claret/10 p-4 text-sm text-claret">{error}</div> : null}
       </div>
       <div className="grid h-fit gap-4 lg:sticky lg:top-24">
         <CartSummary />
@@ -88,5 +88,5 @@ export function CheckoutForm() {
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="rounded-[2rem] border border-silver-200 bg-white p-5 shadow-soft"><h2 className="mb-4 text-lg font-semibold text-ink">{title}</h2>{children}</section>;
+  return <section className="rounded-sm border border-silver-200 bg-[#0B1828] p-5"><h2 className="mb-4 font-display text-2xl font-semibold text-foreground">{title}</h2>{children}</section>;
 }

@@ -7,7 +7,6 @@ import type { Product } from "@/types/commerce";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Price } from "@/components/ui/price";
-import { RatingStars } from "@/components/ui/rating-stars";
 import { useCartStore } from "@/store/cart.store";
 import { useFavoriteStore } from "@/store/favorite.store";
 import { cn } from "@/lib/utils/format";
@@ -21,20 +20,20 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <motion.article
-      className="group overflow-hidden rounded-[1.5rem] border border-silver-200 bg-white shadow-soft transition hover:-translate-y-1 hover:border-sky-200 hover:shadow-premium"
+      className="group grid h-full overflow-hidden rounded-sm border border-line bg-pearl text-slate shadow-soft transition duration-300 hover:-translate-y-1 hover:border-cta/60"
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
     >
       <Link href={`/products/${product.slug}`} className="relative block aspect-[4/5] overflow-hidden bg-silver-100">
         <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-          <Badge>Bạc S925</Badge>
-          {product.newArrival ? <Badge className="border-sky-200 text-sky-700">Mới</Badge> : null}
+        <div className="absolute left-3 top-3 flex max-w-[calc(100%-72px)] flex-wrap gap-2">
+          {product.bestSeller ? <Badge>Best seller</Badge> : <Badge>Bạc S925</Badge>}
+          {product.newArrival ? <Badge className="border-cta/40 bg-cta-soft text-navy">Hàng mới</Badge> : null}
         </div>
         <button
           aria-label="Yêu thích"
-          className={cn("absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/85 text-claret shadow-sm backdrop-blur transition hover:bg-white", isFavorite && "text-red-500")}
+          className={cn("absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-sm border border-line bg-pearl/80 text-slate backdrop-blur transition hover:border-cta hover:text-cta", isFavorite && "text-cta")}
           onClick={(event) => {
             event.preventDefault();
             toggleFavorite(product.id);
@@ -43,22 +42,22 @@ export function ProductCard({ product }: { product: Product }) {
           <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
         </button>
       </Link>
-      <div className="grid gap-3 p-4">
+      <div className="grid min-h-[220px] content-start gap-3 p-4 md:p-5">
         <div className="grid gap-1">
-          <Link href={`/products/${product.slug}`} className="line-clamp-2 font-semibold text-ink hover:text-claret">
+          <Link href={`/products/${product.slug}`} className="line-clamp-2 font-display text-2xl font-medium leading-tight text-slate hover:text-cta">
             {product.title}
           </Link>
-          <RatingStars rating={product.rating} count={product.reviewCount} />
+          <p className="text-[11px] uppercase tracking-[.22em] text-slate-muted">{product.material} · Đã bán</p>
         </div>
         <div className="flex items-center justify-between gap-3">
           <Price value={variant.price} compareAt={variant.compareAtPrice} />
-          <span className={cn("text-xs font-medium", sellable <= 0 ? "text-red-600" : sellable <= 3 ? "text-amber-600" : "text-emerald-700")}>
+          <span className={cn("text-xs font-bold uppercase tracking-[.12em]", sellable <= 0 ? "text-slate-light" : sellable <= 3 ? "text-warning" : "text-success")}>
             {sellable <= 0 ? "Hết hàng" : sellable <= 3 ? `Chỉ còn ${sellable}` : "Còn hàng"}
           </span>
         </div>
         <Button
           variant="secondary"
-          className="w-full"
+          className="mt-auto w-full"
           disabled={sellable <= 0}
           onClick={() =>
             addItem({

@@ -30,6 +30,7 @@ export function productSchema(product: Product) {
     image: product.images,
     description: product.seoDescription,
     sku: variant.sku,
+    material: product.material,
     brand: { "@type": "Brand", name: siteConfig.name },
     offers: {
       "@type": "Offer",
@@ -37,11 +38,6 @@ export function productSchema(product: Product) {
       price: variant.price,
       availability: variant.inventory.quantityAvailable > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       url: `${siteConfig.url}/products/${product.slug}`,
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: product.rating,
-      reviewCount: product.reviewCount,
     },
   };
 }

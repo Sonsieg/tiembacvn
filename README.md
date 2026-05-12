@@ -77,14 +77,25 @@ Phong cách giao diện:
 - Nữ tính nhẹ
 - Có cảm giác thương hiệu trang sức thật có thể launch
 
-Tone màu:
+Tone màu mới — **Luxury sáng, không quá tối**:
 
-- **Deep Claret**: màu chủ đạo cho hero, button, footer, premium section
-- **Metallic Silver**: màu trang sức, line, border, icon
-- **Pearl White**: nền chính, card sản phẩm
-- **Soft Gray**: text phụ, border, background phụ
-- **Sky Blue**: accent nhẹ cho hover, focus, badge
-- **White Star / Sparkle**: motif ngôi sao nhỏ tạo cảm giác trang sức lấp lánh
+- **Pearl Ivory `#FAF7F0`**: nền chính của website, tạo cảm giác sáng, sạch và cao cấp.
+- **Warm Champagne `#D6B56D`**: màu CTA chính, badge premium, icon nhấn và trạng thái active. Dùng tiết chế để tạo cảm giác sang.
+- **Platinum Silver `#C9CDD3`**: line, border, icon, divider và hiệu ứng ánh bạc.
+- **Midnight Navy `#0B1220`**: chỉ dùng cho header, footer, hero hoặc các section premium cần chiều sâu; không phủ tối toàn bộ website.
+- **Soft Greige `#E8E1D6`**: nền phụ, border nhẹ, skeleton, form background.
+- **Charcoal `#1F2933`**: text chính trên nền sáng.
+- **Muted Taupe `#7A7167`**: text phụ, mô tả, label.
+- **Ice Blue `#A9D6E5`**: accent rất nhẹ cho hover/focus nếu cần, không dùng quá nhiều.
+- **White Star / Sparkle**: motif ngôi sao nhỏ tạo cảm giác trang sức lấp lánh.
+
+Nguyên tắc phối màu:
+
+- Storefront ưu tiên nền sáng **Pearl Ivory / Soft Ivory**, card sáng và ảnh sản phẩm nổi bật.
+- Các mảng tối **Midnight Navy** chỉ dùng để tạo điểm nhấn, ví dụ hero, footer, banner collection hoặc video/story section.
+- Không dùng màu đỏ/claret làm màu chính.
+- Không làm giao diện tối toàn bộ; tránh cảm giác u ám, nặng mắt.
+- CTA chính dùng Champagne Gold, CTA phụ dùng outline Platinum Silver hoặc Charcoal.
 
 Giao diện nên có:
 
@@ -101,6 +112,25 @@ Giao diện nên có:
 - Mobile-first responsive
 
 Không dùng style hoạt hình, không rẻ tiền, không quá nhiều màu, không marketplace layout.
+
+### Hướng UI cần ưu tiên
+
+Website nên đi theo hướng **luxury light jewelry ecommerce**: sáng, tinh tế, cao cấp, không bị tối màu quá. Có thể dùng các mảng Midnight Navy để tạo chiều sâu, nhưng tổng thể storefront vẫn phải dễ đọc, sạch và thân thiện khi mua hàng.
+
+Gợi ý phân bổ màu:
+
+- **70%** Pearl Ivory / Soft Ivory cho nền chính và form.
+- **15%** Midnight Navy cho hero, footer, banner premium, header hoặc các section nhấn.
+- **10%** Platinum Silver / Soft Greige cho border, divider, card, icon.
+- **5%** Champagne Gold cho CTA, active state, badge quan trọng và điểm nhấn.
+
+Các khu vực quan trọng:
+
+- Home hero: nền sáng luxury hoặc navy gradient nhẹ, không quá tối; ảnh trang sức bạc phải nổi bật.
+- Product card: card nền sáng, border mảnh, ảnh rõ, CTA nổi bật nhưng tinh tế.
+- Collection filter: có thể dùng panel sáng với border mảnh hoặc modal sáng; nếu dùng nền tối thì chỉ dùng cho sidebar/panel nhỏ, không làm tối toàn bộ trang.
+- Checkout: ưu tiên sáng, rõ ràng, dễ điền form, giảm cảm giác nặng mắt.
+- Admin: ưu tiên dễ nhìn và thao tác lâu; nền sáng, sidebar navy, active champagne.
 
 ---
 
@@ -345,11 +375,11 @@ CTA:
 
 Visual:
 
-- Deep claret gradient
+- Pearl Ivory kết hợp Midnight Navy gradient nhẹ, có ánh Platinum Silver và Champagne Gold tinh tế
 - Ảnh trang sức bạc lớn
-- Sparkle trắng
-- Sky blue light reflection nhẹ
-- Floating jewelry cards animation
+- Sparkle trắng/Platinum Silver tinh tế
+- Champagne Gold/Ice Blue light reflection rất nhẹ
+- Floating jewelry cards animation nhẹ, nền sáng sang trọng
 
 Trust badges:
 
@@ -437,8 +467,8 @@ Hiển thị:
 Hover:
 
 - Scale nhẹ
-- Glow nhẹ sky blue
-- Shadow claret
+- Glow nhẹ Champagne Gold/Ice Blue
+- Shadow mềm màu champagne/navy opacity thấp
 
 ---
 
@@ -737,7 +767,7 @@ Form:
 - Password
 - Login button
 
-UI luxury dark/claret, clean.
+UI luxury sáng, sạch; có thể dùng Midnight Navy cho panel phụ nhưng không tối toàn màn.
 
 ---
 
@@ -772,10 +802,10 @@ Sidebar:
 
 Style:
 
-- Claret sidebar
+- Midnight Navy sidebar hoặc Light admin sidebar tùy layout
 - Pearl white cards
-- Sky blue active state
-- Silver accent
+- Champagne Gold active state
+- Platinum Silver accent
 - Responsive admin layout
 
 ---
@@ -1403,3 +1433,15 @@ Khi config Supabase sau, chỉ cần thay env là có thể dùng.
 
 Tạo website **Tiembac.vn** hoàn chỉnh, tiếng Việt, luxury ecommerce, bán trang sức bạc, dùng Next.js + Supabase, guest checkout, cart drawer, admin dashboard, product management, order management, inventory reserve, product video YouTube config, SEO-ready, responsive, production-ready architecture.
 # tiembacvn
+
+---
+
+## 20. Ghi chú cập nhật UI mới
+
+README này đã được cập nhật theo hướng **tone màu sang trọng nhưng không quá tối**. Khi implement, ưu tiên giao diện sáng cao cấp thay vì dark toàn bộ. Nền chính nên là Pearl Ivory, các section premium dùng Midnight Navy có kiểm soát, CTA dùng Champagne Gold, border/icon dùng Platinum Silver.
+
+Prompt ngắn cho Codex khi tối ưu UI:
+
+```txt
+Hãy cập nhật UI Tiembac.vn theo hướng luxury light jewelry ecommerce: sang trọng, sáng, tinh tế, không dùng màu đỏ/claret và không làm website quá tối. Dùng Pearl Ivory làm nền chính, Midnight Navy cho header/footer/hero section có kiểm soát, Champagne Gold cho CTA và active state, Platinum Silver cho border/icon/divider, Charcoal cho text chính. Product card nền sáng, filter modal đẹp và dễ dùng, checkout sáng rõ, admin nền sáng dễ thao tác với sidebar navy. Giữ toàn bộ flow guest checkout, cart drawer, product videos, admin dashboard, Supabase service layer và SEO. Toàn bộ text tiếng Việt, responsive mobile-first, build pass.
+```

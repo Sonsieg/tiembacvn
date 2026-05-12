@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AdminDrawer } from "@/components/admin/shared/admin-overlays";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { Order, Product } from "@/types/commerce";
 
@@ -9,15 +14,31 @@ export function StatCard({ label, value, hint }: { label: string; value: string;
 }
 
 export function OrdersTable({ orders }: { orders: Order[] }) {
+  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   return (
-    <Card className="overflow-x-auto p-4">
-      <table className="w-full min-w-[760px] text-left text-sm">
-        <thead className="text-gray-500"><tr><th className="p-3">Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái đơn</th><th>Thanh toán</th><th>Cập nhật</th><th>Ngày tạo</th></tr></thead>
-        <tbody>
-          {orders.map((order) => <tr key={order.id} className="border-t border-silver-200"><td className="p-3"><Link className="font-medium text-claret" href={`/admin/orders/${order.orderNumber}`}>{order.orderNumber}</Link></td><td>{order.customer.fullName}<br /><span className="text-gray-500">{order.customer.phone}</span></td><td>{formatCurrency(order.grandTotal)}</td><td><Badge>{order.orderStatus}</Badge></td><td><Badge>{order.paymentStatus}</Badge></td><td><select defaultValue={order.orderStatus} aria-label="Chuyển trạng thái đơn"><option value="pending">Chờ xác nhận</option><option value="confirmed">Đã xác nhận</option><option value="processing">Đang xử lý</option><option value="shipped">Đã gửi hàng</option><option value="completed">Hoàn tất</option><option value="cancelled">Đã hủy</option></select></td><td>{formatDate(order.createdAt)}</td></tr>)}
-        </tbody>
-      </table>
-    </Card>
+    <>
+      <Card className="overflow-x-auto p-4">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead className="text-gray-500"><tr><th className="p-3">Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái đơn</th><th>Thanh toán</th><th>Cập nhật</th><th>Ngày tạo</th></tr></thead>
+          <tbody>
+            {orders.map((order) => <tr key={order.id} className="border-t border-silver-200 hover:bg-sky-50/45"><td className="p-3"><button className="font-medium text-ink" onClick={() => setActiveOrder(order)}>{order.orderNumber}</button></td><td>{order.customer.fullName}<br /><span className="text-gray-500">{order.customer.phone}</span></td><td>{formatCurrency(order.grandTotal)}</td><td><Badge>{order.orderStatus}</Badge></td><td><Badge>{order.paymentStatus}</Badge></td><td><select defaultValue={order.orderStatus} aria-label="Chuyển trạng thái đơn"><option value="pending">Chờ xác nhận</option><option value="confirmed">Đã xác nhận</option><option value="processing">Đang xử lý</option><option value="shipped">Đã gửi hàng</option><option value="completed">Hoàn tất</option><option value="cancelled">Đã hủy</option></select></td><td>{formatDate(order.createdAt)}</td></tr>)}
+          </tbody>
+        </table>
+      </Card>
+      <AdminDrawer open={Boolean(activeOrder)} title="Chi tiết đơn hàng" description="Xem nhanh và cập nhật đơn mà không rời khỏi danh sách." onClose={() => setActiveOrder(null)} width="max-w-2xl" footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setActiveOrder(null)}>Đóng</Button><Button>Ghi chú / cập nhật</Button></div>}>
+        {activeOrder ? <OrderDetail order={activeOrder} /> : null}
+      </AdminDrawer>
+    </>
+  );
+}
+
+function OrderDetail({ order }: { order: Order }) {
+  return (
+    <div className="grid gap-5">
+      <section className="admin-panel"><h3 className="font-semibold text-ink">Khách hàng</h3><p>{order.customer.fullName} · {order.customer.phone}</p><p className="text-sm text-gray-600">{order.address.addressLine}, {order.address.ward}, {order.address.district}, {order.address.province}</p></section>
+      <section className="admin-panel"><h3 className="font-semibold text-ink">Sản phẩm</h3>{order.items.map((item) => <div key={item.variantId} className="flex items-center justify-between border-t border-silver-200 py-3 first:border-t-0"><span>{item.title} x {item.quantity}</span><b>{formatCurrency(item.totalPrice)}</b></div>)}<div className="flex justify-between border-t border-silver-200 pt-3"><span>Tổng cộng</span><b>{formatCurrency(order.grandTotal)}</b></div></section>
+      <section className="admin-panel"><h3 className="font-semibold text-ink">Timeline</h3>{order.timeline.map((entry, index) => <p key={index} className="text-sm text-gray-600">{formatDate(entry.at)} · {entry.label} {entry.note ? `· ${entry.note}` : ""}</p>)}</section>
+    </div>
   );
 }
 

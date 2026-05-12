@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BarChart3, BookOpen, Boxes, FolderTree, Gem, LayoutDashboard, Package, Percent, Settings, ShoppingBag, Video } from "lucide-react";
 import { usePathname } from "next/navigation";
 import styles from "./admin.module.css";
+import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 
 const links = [
   ["Tổng quan", "/admin/dashboard", LayoutDashboard],
@@ -41,7 +42,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <header className={styles.topbar}>
           <div className={styles.topbarInner}>
             <div><p className={styles.topbarEyebrow}>Supabase Auth Admin</p><h1 className={styles.topbarTitle}>Bảng quản trị Tiembac.vn</h1></div>
-            <Link href="/" className={styles.storefrontLink}>Xem storefront</Link>
+            <div className="flex items-center gap-2">
+              <Link href="/" className={styles.storefrontLink}>Xem storefront</Link>
+              <AdminLogoutButton />
+            </div>
           </div>
         </header>
         <main className={styles.main}>{children}</main>

@@ -21,6 +21,6 @@ export const useFavoriteStore = create<FavoriteState>()(
         })),
       isFavorite: (productId) => get().favoriteProductIds.includes(productId),
     }),
-    { name: "tiembac-favorites" },
+    { name: "tiembac-favorites", skipHydration: true },
   ),
 );

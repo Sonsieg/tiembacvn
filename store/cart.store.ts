@@ -53,6 +53,7 @@ export const useCartStore = create<CartState>()(
     {
       name: "tiembac-cart",
       partialize: (state) => ({ items: state.items, couponCode: state.couponCode }),
+      skipHydration: true,
     },
   ),
 );
