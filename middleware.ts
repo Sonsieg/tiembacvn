@@ -1,0 +1,23 @@
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+    const isLoggedIn = request.cookies.get("tiembac_admin_session")?.value === "authenticated";
+    if (!isLoggedIn) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/admin/login";
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  return updateSession(request);
+}
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+};

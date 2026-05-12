@@ -1,0 +1,496 @@
+.adminRoot {
+  min-height: 100vh;
+  color: #20191c;
+  background: #f1f2f3;
+}
+
+.sidebar {
+  display: none;
+  background:
+    radial-gradient(circle at 20% 8%, rgba(156, 216, 238, 0.22), transparent 24%),
+    linear-gradient(180deg, #5a1628, #43101d);
+  color: #fff;
+  padding: 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.nav {
+  display: grid;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 18px;
+  padding: 12px 14px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.navItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.navItemActive {
+  background: #dff5ff;
+  color: #5a1628;
+}
+
+.content {
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid #e2e4e7;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 16px 20px;
+  backdrop-filter: blur(18px);
+}
+
+.topbarInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.topbarEyebrow {
+  margin: 0;
+  color: #5a1628;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.topbarTitle {
+  margin: 3px 0 0;
+  color: #20191c;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.storefrontLink {
+  border: 1px solid #e2e4e7;
+  border-radius: 999px;
+  padding: 9px 14px;
+  color: #5a1628;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.main {
+  padding: 18px;
+}
+
+@media (min-width: 1024px) {
+  .adminRoot {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .main {
+    padding: 24px;
+  }
+}
+
+.adminRoot :global(a) {
+  color: inherit;
+}
+
+.adminRoot :global(.grid) {
+  display: grid;
+}
+
+.adminRoot :global(.flex) {
+  display: flex;
+}
+
+.adminRoot :global(.block) {
+  display: block;
+}
+
+.adminRoot :global(.inline-flex) {
+  display: inline-flex;
+}
+
+.adminRoot :global(.items-center) {
+  align-items: center;
+}
+
+.adminRoot :global(.items-end) {
+  align-items: flex-end;
+}
+
+.adminRoot :global(.justify-between) {
+  justify-content: space-between;
+}
+
+.adminRoot :global(.flex-wrap) {
+  flex-wrap: wrap;
+}
+
+.adminRoot :global(.flex-1) {
+  flex: 1 1 0%;
+}
+
+.adminRoot :global(.h-fit) {
+  height: fit-content;
+}
+
+.adminRoot :global(.h-12) {
+  height: 48px;
+}
+
+.adminRoot :global(.w-12) {
+  width: 48px;
+}
+
+.adminRoot :global(.w-full) {
+  width: 100%;
+}
+
+.adminRoot :global(.min-w-\[720px\]) {
+  min-width: 720px;
+}
+
+.adminRoot :global(.min-w-\[760px\]) {
+  min-width: 760px;
+}
+
+.adminRoot :global(.min-w-\[860px\]) {
+  min-width: 860px;
+}
+
+.adminRoot :global(.max-w-xs) {
+  max-width: 20rem;
+}
+
+.adminRoot :global(.overflow-x-auto) {
+  overflow-x: auto;
+}
+
+.adminRoot :global(.truncate) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adminRoot :global(.gap-1) {
+  gap: 4px;
+}
+
+.adminRoot :global(.gap-2) {
+  gap: 8px;
+}
+
+.adminRoot :global(.gap-3) {
+  gap: 12px;
+}
+
+.adminRoot :global(.gap-4) {
+  gap: 16px;
+}
+
+.adminRoot :global(.gap-5) {
+  gap: 20px;
+}
+
+.adminRoot :global(.gap-6) {
+  gap: 24px;
+}
+
+.adminRoot :global(.p-3) {
+  padding: 12px;
+}
+
+.adminRoot :global(.p-4) {
+  padding: 16px;
+}
+
+.adminRoot :global(.p-5) {
+  padding: 20px;
+}
+
+.adminRoot :global(.px-4) {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.adminRoot :global(.py-2) {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.adminRoot :global(.mt-2) {
+  margin-top: 8px;
+}
+
+.adminRoot :global(.mt-3) {
+  margin-top: 12px;
+}
+
+.adminRoot :global(.mt-4) {
+  margin-top: 16px;
+}
+
+.adminRoot :global(.mb-3) {
+  margin-bottom: 12px;
+}
+
+.adminRoot :global(.rounded-xl) {
+  border-radius: 12px;
+}
+
+.adminRoot :global(.rounded-2xl) {
+  border-radius: 16px;
+}
+
+.adminRoot :global(.rounded-\[2rem\]) {
+  border-radius: 32px;
+}
+
+.adminRoot :global(.rounded-full) {
+  border-radius: 999px;
+}
+
+.adminRoot :global(.rounded-t-xl) {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.adminRoot :global(.border) {
+  border: 1px solid #e2e4e7;
+}
+
+.adminRoot :global(.border-t) {
+  border-top: 1px solid #e2e4e7;
+}
+
+.adminRoot :global(.border-silver-200) {
+  border-color: #e2e4e7;
+}
+
+.adminRoot :global(.bg-white) {
+  background: #fff;
+}
+
+.adminRoot :global(.bg-pearl) {
+  background: #fbf8f5;
+}
+
+.adminRoot :global(.bg-claret) {
+  background: #5a1628;
+}
+
+.adminRoot :global(.self-end) {
+  align-self: flex-end;
+}
+
+.adminRoot :global(.text-white) {
+  color: #fff;
+}
+
+.adminRoot :global(.h-4) {
+  height: 16px;
+}
+
+.adminRoot :global(.w-4) {
+  width: 16px;
+}
+
+.adminRoot :global(.h-fit) {
+  height: fit-content;
+}
+
+.adminRoot :global(.shadow-soft) {
+  box-shadow: 0 18px 60px rgba(32, 25, 28, 0.08);
+}
+
+.adminRoot :global(.text-left) {
+  text-align: left;
+}
+
+.adminRoot :global(.text-sm) {
+  font-size: 14px;
+}
+
+.adminRoot :global(.text-xs) {
+  font-size: 12px;
+}
+
+.adminRoot :global(.text-lg) {
+  font-size: 18px;
+}
+
+.adminRoot :global(.text-2xl) {
+  font-size: 24px;
+}
+
+.adminRoot :global(.font-medium) {
+  font-weight: 600;
+}
+
+.adminRoot :global(.font-semibold) {
+  font-weight: 800;
+}
+
+.adminRoot :global(.text-gray-500) {
+  color: #6b7280;
+}
+
+.adminRoot :global(.text-gray-600) {
+  color: #4b5563;
+}
+
+.adminRoot :global(.text-claret) {
+  color: #5a1628;
+}
+
+.adminRoot :global(.text-ink) {
+  color: #20191c;
+}
+
+.adminRoot :global(table) {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.adminRoot :global(th) {
+  color: #6b7280;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.adminRoot :global(td) {
+  vertical-align: middle;
+}
+
+.adminRoot :global(input),
+.adminRoot :global(select),
+.adminRoot :global(textarea) {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #e2e4e7;
+  border-radius: 16px;
+  padding: 12px 14px;
+  color: #20191c;
+  background: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.adminRoot :global(input:focus),
+.adminRoot :global(select:focus),
+.adminRoot :global(textarea:focus) {
+  border-color: #9cd8ee;
+  box-shadow: 0 0 0 4px rgba(156, 216, 238, 0.2);
+}
+
+.adminRoot :global(label) {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.adminRoot :global(button),
+.adminRoot :global(a[href="/admin/products/new"]) {
+  text-decoration: none;
+}
+
+.adminRoot :global(button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #e2e4e7;
+  border-radius: 999px;
+  padding: 10px 16px;
+  color: #5a1628;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.adminRoot :global(button:hover) {
+  border-color: #9cd8ee;
+  background: #effaff;
+}
+
+.adminRoot :global(.eyebrow) {
+  margin: 0;
+  color: #5a1628;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.adminRoot :global(img) {
+  display: block;
+}
+
+.adminRoot :global(.object-cover) {
+  object-fit: cover;
+}
+
+@media (min-width: 768px) {
+  .adminRoot :global(.md\:grid-cols-2) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .adminRoot :global(.md\:grid-cols-3) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .adminRoot :global(.md\:grid-cols-4) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .adminRoot :global(.md\:grid-cols-\[1fr_180px_180px\]) {
+    grid-template-columns: 1fr 180px 180px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .adminRoot :global(.xl\:grid-cols-4) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .adminRoot :global(.xl\:grid-cols-\[1fr_360px\]) {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+
+  .adminRoot :global(.xl\:grid-cols-\[1fr_380px\]) {
+    grid-template-columns: minmax(0, 1fr) 380px;
+  }
+}

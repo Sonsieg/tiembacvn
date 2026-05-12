@@ -1,0 +1,86 @@
+import type { BlogPost } from "@/types/commerce";
+
+const cover = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1400&auto=format&fit=crop";
+
+export const blogPosts: BlogPost[] = [
+  {
+    id: "blog-size",
+    title: "Cách chọn size nhẫn bạc chuẩn tại nhà",
+    slug: "cach-chon-size-nhan-bac-chuan-tai-nha",
+    excerpt: "Hướng dẫn đo size nhẫn bằng giấy, thước và một vài lưu ý để nhẫn vừa tay.",
+    coverImage: cover,
+    content: [
+      "Bạn có thể dùng một sợi giấy nhỏ quấn quanh ngón tay, đánh dấu điểm giao nhau rồi đo chiều dài bằng thước milimet.",
+      "Nên đo vào cuối ngày khi tay ở trạng thái ổn định. Nếu phân vân giữa hai size, hãy chọn size lớn hơn để đeo thoải mái.",
+      "Tiembac.vn hỗ trợ tư vấn và đổi size dễ dàng với sản phẩm còn đủ điều kiện.",
+    ],
+    publishedAt: "2026-04-18T09:00:00.000Z",
+    status: "published",
+    seoTitle: "Cách chọn size nhẫn bạc chuẩn tại nhà | Tiembac.vn",
+    seoDescription: "Hướng dẫn chọn size nhẫn bạc đơn giản, dễ làm tại nhà.",
+  },
+  {
+    id: "blog-care",
+    title: "Cách bảo quản bạc S925 luôn sáng đẹp",
+    slug: "cach-bao-quan-bac-s925-luon-sang-dep",
+    excerpt: "Các thói quen nhỏ giúp trang sức bạc giữ được độ sáng và hạn chế xỉn màu.",
+    coverImage: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?q=80&w=1400&auto=format&fit=crop",
+    content: [
+      "Bạc S925 nên được lau bằng khăn mềm sau khi đeo, nhất là khi tiếp xúc mồ hôi.",
+      "Hãy tháo trang sức trước khi tắm, bơi, xịt nước hoa hoặc dùng mỹ phẩm.",
+      "Khi không dùng, cất bạc trong túi zip hoặc hộp riêng để giảm tiếp xúc không khí.",
+    ],
+    publishedAt: "2026-04-12T09:00:00.000Z",
+    status: "published",
+    seoTitle: "Cách bảo quản bạc S925 luôn sáng đẹp | Tiembac.vn",
+    seoDescription: "Mẹo bảo quản trang sức bạc S925 sáng đẹp lâu hơn.",
+  },
+  {
+    id: "blog-s925",
+    title: "Bạc S925 là gì?",
+    slug: "bac-s925-la-gi",
+    excerpt: "Tìm hiểu thành phần, ưu điểm và lý do bạc S925 được dùng nhiều trong trang sức.",
+    coverImage: "https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?q=80&w=1400&auto=format&fit=crop",
+    content: [
+      "Bạc S925 gồm 92.5% bạc nguyên chất và 7.5% hợp kim giúp tăng độ cứng.",
+      "Nhờ cân bằng giữa độ sáng và độ bền, S925 là chất liệu phổ biến cho nhẫn, dây chuyền, vòng tay và bông tai.",
+      "Khi mua, bạn nên kiểm tra thông tin chất liệu, chính sách bảo hành và cách bảo quản.",
+    ],
+    publishedAt: "2026-04-06T09:00:00.000Z",
+    status: "published",
+    seoTitle: "Bạc S925 là gì? | Tiembac.vn",
+    seoDescription: "Giải thích bạc S925 và cách nhận biết trang sức bạc chất lượng.",
+  },
+  {
+    id: "blog-tarnish",
+    title: "Trang sức bạc có bị đen không?",
+    slug: "trang-suc-bac-co-bi-den-khong",
+    excerpt: "Bạc có thể xỉn màu theo môi trường, nhưng có thể làm sáng lại đúng cách.",
+    coverImage: cover,
+    content: [
+      "Bạc có thể xỉn do lưu huỳnh trong không khí, mồ hôi hoặc hóa chất.",
+      "Đây là phản ứng tự nhiên và không đồng nghĩa sản phẩm kém chất lượng.",
+      "Bạn có thể dùng khăn lau bạc chuyên dụng hoặc mang tới shop để được hỗ trợ làm sáng.",
+    ],
+    publishedAt: "2026-03-28T09:00:00.000Z",
+    status: "published",
+    seoTitle: "Trang sức bạc có bị đen không? | Tiembac.vn",
+    seoDescription: "Giải đáp hiện tượng bạc bị xỉn màu và cách xử lý.",
+  },
+  {
+    id: "blog-gift",
+    title: "Gợi ý quà tặng trang sức bạc cho bạn gái",
+    slug: "goi-y-qua-tang-trang-suc-bac-cho-ban-gai",
+    excerpt: "Những kiểu trang sức bạc dễ tặng, dễ đeo và nhiều ý nghĩa.",
+    coverImage: "https://images.unsplash.com/photo-1543294001-f7cd5d7fb516?q=80&w=1400&auto=format&fit=crop",
+    content: [
+      "Dây chuyền mặt tim phù hợp dịp kỷ niệm, trong khi lắc tay charm hợp sinh nhật hoặc lời chúc may mắn.",
+      "Nếu chưa chắc size nhẫn, bạn có thể chọn dây chuyền hoặc bông tai để giảm rủi ro.",
+      "Một hộp quà tinh tế và lời nhắn cá nhân sẽ khiến món quà có cảm xúc hơn.",
+    ],
+    publishedAt: "2026-03-18T09:00:00.000Z",
+    status: "published",
+    seoTitle: "Gợi ý quà tặng trang sức bạc cho bạn gái | Tiembac.vn",
+    seoDescription: "Gợi ý chọn trang sức bạc làm quà tặng nữ tinh tế và dễ ứng dụng.",
+  },
+];

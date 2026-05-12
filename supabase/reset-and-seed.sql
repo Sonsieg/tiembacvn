@@ -1,0 +1,5 @@
+-- Helper note:
+-- Supabase SQL Editor does not support psql \i includes.
+-- To clear and recreate real data:
+-- 1. Run the full content of supabase/schema.sql.
+-- 2. Run the full content of supabase/seed.sql.
