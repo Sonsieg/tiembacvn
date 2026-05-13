@@ -1,4 +1,4 @@
-export type ProductStatus = "active" | "draft" | "archived";
+export type ProductStatus = "active" | "inactive" | "draft" | "archived";
 export type PaymentMethod = "cod" | "bank_transfer" | "online";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "completed" | "cancelled";

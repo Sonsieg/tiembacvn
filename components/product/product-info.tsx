@@ -16,11 +16,14 @@ export function ProductInfo({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const variant = product.variants.find((entry) => entry.id === variantId) ?? product.variants[0];
   const sellable = variant.inventory.quantityAvailable - variant.inventory.quantityReserved;
+  const canBuy = product.status === "active" && variant.active && sellable > 0;
   const addItem = useCartStore((state) => state.addItem);
   const toggleFavorite = useFavoriteStore((state) => state.toggleFavorite);
   const favorite = useFavoriteStore((state) => state.isFavorite(product.id));
 
-  const addToCart = () =>
+  const addToCart = () => {
+    if (!canBuy) return;
+
     addItem({
       productId: product.id,
       variantId: variant.id,
@@ -33,6 +36,7 @@ export function ProductInfo({ product }: { product: Product }) {
       compareAtPrice: variant.compareAtPrice,
       quantity,
     });
+  };
 
   return (
     <div className="sticky top-24 grid gap-6">
@@ -86,8 +90,8 @@ export function ProductInfo({ product }: { product: Product }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-        <Button disabled={sellable <= 0} onClick={addToCart}><ShoppingBag className="h-4 w-4" /> Thêm vào giỏ</Button>
-        <ButtonLink href="/checkout" variant="dark" onClick={addToCart}>Mua ngay</ButtonLink>
+        <Button disabled={!canBuy} onClick={addToCart}><ShoppingBag className="h-4 w-4" /> Thêm vào giỏ</Button>
+        {canBuy ? <ButtonLink href="/checkout" variant="dark" onClick={addToCart}>Mua ngay</ButtonLink> : <Button type="button" variant="dark" disabled>Mua ngay</Button>}
         <Button aria-label="Yêu thích" variant="secondary" size="icon" onClick={() => toggleFavorite(product.id)}>
           <Heart className={cn("h-4 w-4", favorite && "fill-current text-claret")} />
         </Button>

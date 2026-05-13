@@ -14,13 +14,15 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   margin-bottom: 32px;
-  color: #fff;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 24px;
-  font-weight: 600;
   text-decoration: none;
+}
+
+.brandLogo {
+  width: min(100%, 190px);
+  height: auto;
+  object-fit: contain;
 }
 
 .nav {
@@ -73,6 +75,14 @@
   gap: 16px;
 }
 
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .topbarEyebrow {
   margin: 0;
   color: #c9a85d;
@@ -89,17 +99,6 @@
   font-weight: 800;
 }
 
-.storefrontLink {
-  border: 1px solid #e9ded0;
-  border-radius: 999px;
-  padding: 9px 14px;
-  color: #2f3744;
-  background: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
 .main {
   padding: 18px;
 }
@@ -112,7 +111,11 @@
 
   .sidebar {
     display: block;
+    position: sticky;
+    top: 0;
+    height: 100vh;
     min-height: 100vh;
+    overflow-y: auto;
   }
 
   .main {
@@ -681,23 +684,27 @@
   color: #162033;
 }
 
-.admin-logout-button {
+.adminActionButton {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(255, 253, 248, 0.24);
+  border: 1px solid #162033;
   border-radius: 4px;
   padding: 10px 14px;
   color: #fffdf8;
-  background: rgba(255, 255, 255, 0.04);
+  background: #162033;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .12em;
   text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.admin-logout-button:hover {
+.adminActionButton:hover {
   border-color: #c9a85d;
+  background: #22314c;
   color: #efe2c3;
 }
 

@@ -5,8 +5,8 @@ export async function reserveInventory(items: Pick<CartItem, "productId" | "vari
   for (const item of items) {
     const product = await getProductById(item.productId);
     const variant = product?.variants.find((entry) => entry.id === item.variantId);
-    if (!variant) {
-      return { ok: false, message: "Sản phẩm không tồn tại" };
+    if (!product || product.status !== "active" || !variant?.active) {
+      return { ok: false, message: "Sản phẩm không còn khả dụng" };
     }
     const sellable = variant.inventory.quantityAvailable - variant.inventory.quantityReserved;
     if (sellable < item.quantity) {

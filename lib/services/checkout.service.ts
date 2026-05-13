@@ -12,7 +12,7 @@ export async function calculateOrderTotals(items: Pick<CartItem, "productId" | "
   for (const item of items) {
     const product = await getProductById(item.productId);
     const variant = product?.variants.find((entry) => entry.id === item.variantId && entry.active);
-    if (!product || !variant) throw new Error("Sản phẩm trong giỏ hàng không còn khả dụng");
+    if (!product || product.status !== "active" || !variant) throw new Error("Sản phẩm trong giỏ hàng không còn khả dụng");
     const totalPrice = variant.price * item.quantity;
     subtotal += totalPrice;
     snapshots.push({

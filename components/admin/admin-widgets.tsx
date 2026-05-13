@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -21,18 +22,45 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [payment, setPayment] = useState("all");
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState("10");
+
+  function resetPage() {
+    setPage(1);
+  }
+
+  function updateStatus(nextStatus: string) {
+    setStatus(nextStatus);
+    resetPage();
+  }
+
+  function updatePayment(nextPayment: string) {
+    setPayment(nextPayment);
+    resetPage();
+  }
+
+  function updateItemsPerPage(nextItemsPerPage: string) {
+    setItemsPerPage(nextItemsPerPage);
+    resetPage();
+  }
+
   const filtered = orders.filter((order) => {
     const haystack = `${order.orderNumber} ${order.customer.fullName} ${order.customer.phone}`.toLowerCase();
     return (!query || haystack.includes(query.toLowerCase()))
       && (status === "all" || order.orderStatus === status)
       && (payment === "all" || order.paymentStatus === payment);
   });
+
+  const perPage = Number(itemsPerPage);
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paginatedOrders = filtered.slice((page - 1) * perPage, page * perPage);
+
   return (
     <>
       <div className="grid gap-4">
         <div className="grid gap-3 border-b border-line p-4 lg:grid-cols-[1fr_190px_190px]">
-          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm mã đơn, khách hàng, số điện thoại..." />
-          <AdminDropdown ariaLabel="Lọc trạng thái đơn" value={status} onChange={setStatus} options={[
+          <Input value={query} onChange={(event) => { setQuery(event.target.value); resetPage(); }} placeholder="Tìm mã đơn, khách hàng, số điện thoại..." />
+          <AdminDropdown ariaLabel="Lọc trạng thái đơn" value={status} onChange={updateStatus} options={[
             { value: "all", label: "Tất cả trạng thái" },
             { value: "pending", label: "Chờ xác nhận" },
             { value: "confirmed", label: "Đã xác nhận" },
@@ -41,7 +69,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             { value: "completed", label: "Hoàn tất" },
             { value: "cancelled", label: "Đã hủy" },
           ]} />
-          <AdminDropdown ariaLabel="Lọc thanh toán" value={payment} onChange={setPayment} options={[
+          <AdminDropdown ariaLabel="Lọc thanh toán" value={payment} onChange={updatePayment} options={[
             { value: "all", label: "Tất cả thanh toán" },
             { value: "pending", label: "Chờ thanh toán" },
             { value: "paid", label: "Đã thanh toán" },
@@ -53,7 +81,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="text-slate-muted"><tr><th className="p-3">Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thanh toán</th><th>Cập nhật nhanh</th><th>Ngày tạo</th></tr></thead>
             <tbody>
-              {filtered.map((order) => (
+              {paginatedOrders.map((order) => (
                 <tr key={order.id} className="border-t border-line hover:bg-ivory-soft/70">
                   <td className="p-3"><button className="font-semibold text-navy hover:text-cta" onClick={() => setActiveOrder(order)}>{order.orderNumber}</button></td>
                   <td>{order.customer.fullName}<br /><span className="text-slate-muted">{order.customer.phone}</span></td>
@@ -74,6 +102,36 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 || filtered.length > 10 ? (
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line p-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500">
+                Hiển thị {(page - 1) * perPage + 1} - {Math.min(page * perPage, filtered.length)} trên tổng số {filtered.length} đơn hàng
+              </span>
+              <select
+                className="h-8 rounded-sm border border-silver-200 bg-white px-2 text-sm outline-none hover:border-cta focus:border-cta focus:ring-2 focus:ring-cta/20"
+                value={itemsPerPage}
+                onChange={(event) => updateItemsPerPage(event.target.value)}
+                aria-label="Số lượng mỗi trang"
+              >
+                <option value="10">10 / trang</option>
+                <option value="20">20 / trang</option>
+                <option value="50">50 / trang</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="secondary" size="sm" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                <ChevronLeft className="h-4 w-4" /> Trước
+              </Button>
+              <span className="text-sm font-medium text-ink">
+                {page} / {totalPages}
+              </span>
+              <Button type="button" variant="secondary" size="sm" disabled={page === totalPages || totalPages === 0} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
+                Sau <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
       <AdminDrawer open={Boolean(activeOrder)} title="Chi tiết đơn hàng" description="Xem nhanh và cập nhật đơn mà không rời khỏi danh sách." onClose={() => setActiveOrder(null)} width="max-w-2xl" footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setActiveOrder(null)}>Đóng</Button><Button>Ghi chú / cập nhật</Button></div>}>
         {activeOrder ? <OrderDetail order={activeOrder} /> : null}

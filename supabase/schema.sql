@@ -45,7 +45,7 @@ create table products (
   best_seller boolean not null default false,
   new_arrival boolean not null default false,
   tags text[] not null default '{}',
-  status text not null default 'active' check (status in ('active','draft','archived')),
+  status text not null default 'active' check (status in ('active','inactive','draft','archived')),
   seo_title text,
   seo_description text,
   og_image text,

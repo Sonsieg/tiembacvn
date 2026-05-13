@@ -18,7 +18,7 @@ export type AdminProductFilters = {
   maxPrice: string;
 };
 
-const statusOptions = [["active", "Active"], ["draft", "Draft"], ["archived", "Archived"]];
+const statusOptions = [["active", "Active"], ["inactive", "Inactive"], ["draft", "Draft"], ["archived", "Archived"]];
 const stockOptions = [["in-stock", "Còn hàng"], ["out-stock", "Hết hàng"], ["low-stock", "Sắp hết hàng"], ["reserved", "Có hàng reserve"]];
 const tagOptions = [["new", "New"], ["best", "Best seller"], ["sale", "Sale"], ["featured", "Featured"]];
 

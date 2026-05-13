@@ -16,6 +16,7 @@ export function ProductCard({ product }: { product: Product }) {
   const toggleFavorite = useFavoriteStore((state) => state.toggleFavorite);
   const isFavorite = useFavoriteStore((state) => state.isFavorite(product.id));
   const sellable = variant.inventory.quantityAvailable - variant.inventory.quantityReserved;
+  const canBuy = product.status === "active" && variant.active && sellable > 0;
 
   return (
     <motion.article
@@ -64,8 +65,9 @@ export function ProductCard({ product }: { product: Product }) {
         <Button
           variant="secondary"
           className="mt-auto h-12 w-full"
-          disabled={sellable <= 0}
-          onClick={() =>
+          disabled={!canBuy}
+          onClick={() => {
+            if (!canBuy) return;
             addItem({
               productId: product.id,
               variantId: variant.id,
@@ -77,8 +79,8 @@ export function ProductCard({ product }: { product: Product }) {
               unitPrice: variant.price,
               compareAtPrice: variant.compareAtPrice,
               quantity: 1,
-            })
-          }
+            });
+          }}
         >
           <ShoppingBag className="h-4 w-4" />
           Thêm vào giỏ

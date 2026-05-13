@@ -10,7 +10,11 @@ export function AdminLogoutButton() {
     router.replace("/admin/login");
   }
   return (
-    <button type="button" className="admin-logout-button" onClick={logout}>
+    <button
+      type="button"
+      className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium text-gray-500 transition-none hover:bg-transparent hover:text-gray-500"
+      onClick={logout}
+    >
       <LogOut className="h-4 w-4" />
       Đăng xuất
     </button>
