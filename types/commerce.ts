@@ -145,6 +145,7 @@ export type OrderItemSnapshot = CartItem & {
 export type Order = {
   id: string;
   orderNumber: string;
+  idempotencyKey?: string;
   customer: CheckoutCustomer;
   address: CheckoutAddress;
   items: OrderItemSnapshot[];
@@ -159,6 +160,13 @@ export type Order = {
   fulfillmentStatus: FulfillmentStatus;
   timeline: { label: string; at: string; note?: string }[];
   createdAt: string;
+};
+
+export type OrderStatusUpdateInput = {
+  orderStatus?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  fulfillmentStatus?: FulfillmentStatus;
+  note?: string;
 };
 
 export type Coupon = {

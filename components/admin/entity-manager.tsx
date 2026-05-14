@@ -1,26 +1,60 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Eye, Pencil, Plus, Power, PowerOff, Search } from "lucide-react";
+import { CheckCircle, ChevronLeft, ChevronRight, Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { AdminDrawer } from "@/components/admin/shared/admin-overlays";
+import { AdminDrawer, ConfirmDialog } from "@/components/admin/shared/admin-overlays";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Field, Input, Select, Textarea } from "@/components/ui/form";
+import { Field, Input, Textarea } from "@/components/ui/form";
+import { AdminDropdown } from "@/components/admin/admin-dropdown";
 
 type EntityRow = Record<string, string | number | boolean | undefined>;
+type EntityType = "categories" | "collections";
 
-export function EntityManager({ eyebrow, title, description, fields, rows }: { eyebrow: string; title: string; description: string; fields: string[]; rows: EntityRow[] }) {
+export function EntityManager({ eyebrow, title, description, fields, rows, entity }: { eyebrow: string; title: string; description: string; fields: string[]; rows: EntityRow[]; entity: EntityType }) {
   const [mode, setMode] = useState<"create" | "edit" | "view" | null>(null);
   const [row, setRow] = useState<EntityRow | null>(null);
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [statusTarget, setStatusTarget] = useState<EntityRow | null>(null);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, boolean>>({});
+  const [statusError, setStatusError] = useState("");
+  const [updating, setUpdating] = useState(false);
   const open = (nextMode: "create" | "edit" | "view", nextRow?: EntityRow) => { setMode(nextMode); setRow(nextRow ?? null); };
-  const visibleRows = rows.filter((item) => fields.some((field) => String(item[field] ?? "").toLowerCase().includes(query.toLowerCase())));
+  const displayedRows = rows.map((item) => {
+    const id = String(item.id ?? "");
+    return id && id in statusOverrides ? { ...item, Active: statusOverrides[id] ? "Active" : "Inactive" } : item;
+  });
+  const visibleRows = displayedRows.filter((item) => fields.some((field) => String(item[field] ?? "").toLowerCase().includes(query.toLowerCase())));
   const pageSize = 10;
   const totalPages = Math.max(1, Math.ceil(visibleRows.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const paginatedRows = visibleRows.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const activeCount = rows.filter((item) => String(item.Active ?? item.Status ?? "").toLowerCase() === "active").length;
+  const activeCount = displayedRows.filter((item) => String(item.Active ?? item.Status ?? "").toLowerCase() === "active").length;
+
+  async function confirmStatusToggle() {
+    if (!statusTarget) return;
+    setUpdating(true);
+    setStatusError("");
+    const id = String(statusTarget.id ?? "");
+    const nextActive = !isActive(statusTarget);
+
+    try {
+      const response = await fetch("/api/admin/entities/status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entity, id, active: nextActive }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Không thể cập nhật trạng thái");
+      setStatusOverrides((current) => ({ ...current, [id]: nextActive }));
+      setStatusTarget(null);
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : "Không thể cập nhật trạng thái");
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   return (
     <div className="grid gap-5">
@@ -31,7 +65,7 @@ export function EntityManager({ eyebrow, title, description, fields, rows }: { e
       <div className="grid gap-3 md:grid-cols-3">
         <section className="admin-panel"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-muted">Tổng</p><b className="mt-2 block text-2xl text-ink">{rows.length}</b></section>
         <section className="admin-panel"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-muted">Active</p><b className="mt-2 block text-2xl text-success">{activeCount}</b></section>
-        <section className="admin-panel"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-muted">Ẩn / inactive</p><b className="mt-2 block text-2xl text-danger">{Math.max(rows.length - activeCount, 0)}</b></section>
+        <section className="admin-panel"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-muted">Inactive</p><b className="mt-2 block text-2xl text-danger">{Math.max(displayedRows.length - activeCount, 0)}</b></section>
       </div>
       <section className="admin-table-card overflow-x-auto">
         <div className="border-b border-line p-4">
@@ -44,9 +78,17 @@ export function EntityManager({ eyebrow, title, description, fields, rows }: { e
           <thead><tr>{fields.slice(0, 5).map((field) => <th key={field} className="p-4">{field}</th>)}<th>Thao tác</th></tr></thead>
           <tbody>
             {paginatedRows.map((item, index) => (
-              <tr key={index} className="border-t border-silver-200">
+              <tr key={String(item.id ?? index)} className="border-t border-silver-200">
                 {fields.slice(0, 5).map((field, fieldIndex) => <td key={field} className="p-4">{renderCell(field, item[field], fieldIndex === 0 ? `${title} ${index + 1}` : "Đang cấu hình")}</td>)}
-                <td><div className="flex gap-1"><button className="admin-icon-button" onClick={() => open("view", item)} aria-label="Xem"><Eye className="h-4 w-4" /></button><button className="admin-icon-button" onClick={() => open("edit", item)} aria-label="Sửa"><Pencil className="h-4 w-4" /></button><button className="admin-icon-button" onClick={() => open("edit", { ...item, Active: isActive(item) ? "Inactive" : "Active" })} aria-label={isActive(item) ? "Inactive" : "Active"}>{isActive(item) ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}</button></div></td>
+                <td>
+                  <div className="flex gap-1">
+                    <button type="button" className="admin-icon-button" onClick={() => open("view", item)} aria-label="Xem" title="Xem nhanh"><Eye className="h-4 w-4" /></button>
+                    <button type="button" className="admin-icon-button" onClick={() => open("edit", item)} aria-label="Sửa" title="Sửa"><Pencil className="h-4 w-4" /></button>
+                    <button type="button" className="admin-icon-button" onClick={() => setStatusTarget(item)} aria-label={isActive(item) ? "Inactive" : "Active"} title={isActive(item) ? "Chuyển inactive" : "Chuyển active"}>
+                      {isActive(item) ? <Trash2 className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -75,11 +117,37 @@ export function EntityManager({ eyebrow, title, description, fields, rows }: { e
           {fields.slice(0, 6).map((field) => {
             const lower = field.toLowerCase();
             if (lower.includes("description") || lower.includes("mô tả")) return <Field key={field} label={field}><Textarea defaultValue={String(row?.[field] ?? "")} readOnly={mode === "view"} /></Field>;
-            if (lower.includes("active") || lower.includes("status") || lower.includes("featured")) return <Field key={field} label={field}><Select defaultValue={String(row?.[field] ?? "active")} disabled={mode === "view"}><option value="active">Active</option><option value="inactive">Inactive</option><option value="hidden">Hidden</option></Select></Field>;
+            if (lower.includes("active") || lower.includes("status")) {
+              const value = String(row?.[field] ?? "Active").toLowerCase() === "active" ? "active" : "inactive";
+              return (
+                <Field key={field} label={field}>
+                  <AdminDropdown
+                    ariaLabel={`Chọn ${field}`}
+                    value={value}
+                    onChange={() => undefined}
+                    options={[
+                      { value: "active", label: "Active" },
+                      { value: "inactive", label: "Inactive" },
+                    ]}
+                    className={mode === "view" ? "pointer-events-none opacity-70" : ""}
+                  />
+                </Field>
+              );
+            }
             return <Field key={field} label={field}><Input defaultValue={String(row?.[field] ?? "")} readOnly={mode === "view"} /></Field>;
           })}
         </div>
       </AdminDrawer>
+      <ConfirmDialog
+        open={Boolean(statusTarget)}
+        title={statusTarget && isActive(statusTarget) ? "Inactive mục này?" : "Active mục này?"}
+        description={statusError || (statusTarget && isActive(statusTarget)
+          ? "Mục này sẽ được chuyển sang inactive và không hiển thị ở storefront. Dữ liệu vẫn được giữ trong database."
+          : "Mục này sẽ được bật lại active và có thể hiển thị ở storefront.")}
+        confirmLabel={updating ? "Đang lưu..." : statusTarget && isActive(statusTarget) ? "Chuyển inactive" : "Chuyển active"}
+        onConfirm={confirmStatusToggle}
+        onClose={() => { setStatusTarget(null); setStatusError(""); }}
+      />
     </div>
   );
 }
@@ -97,7 +165,7 @@ function renderCell(field: string, value: EntityRow[string], fallback: string) {
     return label && label !== fallback ? <img src={label} alt="" className="h-12 w-12 rounded-sm object-cover" /> : <span className="text-slate-muted">Chưa có ảnh</span>;
   }
 
-  if (lower.includes("active") || lower.includes("status") || normalized === "active" || normalized === "inactive" || normalized === "hidden") {
+  if (lower.includes("active") || lower.includes("status") || normalized === "active" || normalized === "inactive") {
     const className = normalized === "active"
       ? "border-success/25 bg-success/10 text-success"
       : "border-danger/25 bg-danger/10 text-danger";

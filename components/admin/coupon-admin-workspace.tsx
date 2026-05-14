@@ -1,22 +1,53 @@
 "use client";
 
-import { Power, PowerOff, Search } from "lucide-react";
+import { CheckCircle, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { Coupon } from "@/types/commerce";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select } from "@/components/ui/form";
+import { Field, Input } from "@/components/ui/form";
+import { AdminDropdown } from "@/components/admin/admin-dropdown";
+import { ConfirmDialog } from "@/components/admin/shared/admin-overlays";
 import { formatCurrency } from "@/lib/utils/format";
 
 const couponTypeLabels: Record<string, string> = {
   percentage: "PERCENT",
   fixed_amount: "VND",
-  free_shipping: "VND",
 };
 
 export function CouponAdminWorkspace({ coupons }: { coupons: Coupon[] }) {
   const [query, setQuery] = useState("");
-  const filtered = coupons.filter((coupon) => `${coupon.code} ${coupon.type}`.toLowerCase().includes(query.toLowerCase()));
+  const [type, setType] = useState("percentage");
+  const [status, setStatus] = useState("active");
+  const [statusTarget, setStatusTarget] = useState<Coupon | null>(null);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, boolean>>({});
+  const [statusError, setStatusError] = useState("");
+  const [updating, setUpdating] = useState(false);
+  const displayedCoupons = coupons.map((coupon) => coupon.id in statusOverrides ? { ...coupon, active: statusOverrides[coupon.id] } : coupon);
+  const filtered = displayedCoupons.filter((coupon) => `${coupon.code} ${coupon.type}`.toLowerCase().includes(query.toLowerCase()));
+
+  async function confirmStatusToggle() {
+    if (!statusTarget) return;
+    setUpdating(true);
+    setStatusError("");
+    const nextActive = !statusTarget.active;
+
+    try {
+      const response = await fetch("/api/admin/entities/status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entity: "coupons", id: statusTarget.id, active: nextActive }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Không thể cập nhật coupon");
+      setStatusOverrides((current) => ({ ...current, [statusTarget.id]: nextActive }));
+      setStatusTarget(null);
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : "Không thể cập nhật coupon");
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   return (
     <div className="grid gap-5">
@@ -27,7 +58,7 @@ export function CouponAdminWorkspace({ coupons }: { coupons: Coupon[] }) {
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <section className="admin-panel"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-muted">Mã active</p><b className="mt-2 block text-2xl text-success">{coupons.filter((coupon) => coupon.active).length}</b></section>
+        <section className="admin-panel"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-muted">Mã active</p><b className="mt-2 block text-2xl text-success">{displayedCoupons.filter((coupon) => coupon.active).length}</b></section>
         <section className="admin-panel"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-muted">Lượt dùng tối đa</p><b className="mt-2 block text-2xl text-ink">100</b></section>
         <section className="admin-panel"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-muted">Đơn tối thiểu gợi ý</p><b className="mt-2 block text-2xl text-cta">{formatCurrency(500000)}</b></section>
       </div>
@@ -46,12 +77,17 @@ export function CouponAdminWorkspace({ coupons }: { coupons: Coupon[] }) {
               {filtered.map((coupon) => (
                 <tr key={coupon.id} className="border-t border-silver-200">
                   <td className="p-4 font-semibold text-ink">{coupon.code}</td>
-                  <td>{couponTypeLabels[coupon.type]}</td>
+                  <td>{couponTypeLabels[coupon.type] ?? "VND"}</td>
                   <td>{coupon.type === "percentage" ? `${coupon.value}%` : formatCurrency(coupon.value)}</td>
                   <td>{formatCurrency(coupon.minOrderTotal)}</td>
                   <td>{coupon.used}/{Math.min(coupon.usageLimit, 100)}</td>
                   <td><Badge className={coupon.active ? "border-success/25 bg-success/10 text-success" : "border-danger/25 bg-danger/10 text-danger"}>{coupon.active ? "Active" : "Inactive"}</Badge></td>
-                  <td><Button type="button" variant="secondary" size="sm">{coupon.active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}{coupon.active ? "Inactive" : "Active"}</Button></td>
+                  <td>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => setStatusTarget(coupon)}>
+                      {coupon.active ? <Trash2 className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                      {coupon.active ? "Inactive" : "Active"}
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -62,17 +98,47 @@ export function CouponAdminWorkspace({ coupons }: { coupons: Coupon[] }) {
         <form className="admin-panel grid h-fit gap-4">
           <h2 className="text-lg font-semibold text-ink">Cấu hình coupon</h2>
           <Field label="Mã"><Input placeholder="TB-WELCOME10" /></Field>
-          <Field label="Loại"><Select defaultValue="percentage"><option value="fixed_amount">VND</option><option value="percentage">PERCENT</option></Select></Field>
+          <Field label="Loại">
+            <AdminDropdown
+              ariaLabel="Chọn loại coupon"
+              value={type}
+              onChange={setType}
+              options={[
+                { value: "fixed_amount", label: "VND" },
+                { value: "percentage", label: "PERCENT" },
+              ]}
+            />
+          </Field>
           <Field label="Giá trị"><Input type="number" min={0} inputMode="numeric" placeholder="50000" /></Field>
           <Field label="Đơn tối thiểu"><Input type="number" min={0} inputMode="numeric" placeholder="500000" /></Field>
           <Field label="Lượt dùng"><Input type="number" min={1} max={100} inputMode="numeric" placeholder="100" /></Field>
-          <Field label="Active"><Select defaultValue="active"><option value="active">Active</option><option value="inactive">Inactive</option></Select></Field>
+          <Field label="Active">
+            <AdminDropdown
+              ariaLabel="Chọn trạng thái coupon"
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: "active", label: "Active" },
+                { value: "inactive", label: "Inactive" },
+              ]}
+            />
+          </Field>
           <div className="rounded-sm border border-line bg-ivory-soft p-4 text-sm text-slate-muted">
             PERCENT nên dùng cho đơn tối thiểu cao và giới hạn phần trăm thấp. VND dễ kiểm soát biên lợi nhuận hơn, đặc biệt khi đặt giá trị nhỏ hơn phần lãi gộp dự kiến của đơn tối thiểu.
           </div>
           <Button type="button">Lưu coupon</Button>
         </form>
       </div>
+      <ConfirmDialog
+        open={Boolean(statusTarget)}
+        title={statusTarget?.active ? "Inactive coupon?" : "Active coupon?"}
+        description={statusError || (statusTarget?.active
+          ? `Coupon ${statusTarget.code} sẽ ngừng áp dụng ở checkout nhưng vẫn được giữ trong database.`
+          : `Coupon ${statusTarget?.code ?? ""} sẽ được bật lại để có thể áp dụng ở checkout.`)}
+        confirmLabel={updating ? "Đang lưu..." : statusTarget?.active ? "Chuyển inactive" : "Chuyển active"}
+        onConfirm={confirmStatusToggle}
+        onClose={() => { setStatusTarget(null); setStatusError(""); }}
+      />
     </div>
   );
 }

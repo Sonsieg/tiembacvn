@@ -57,6 +57,7 @@ export async function createCheckoutOrder(input: CheckoutInput): Promise<Order> 
   return {
     id: `order-${orderNumber}`,
     orderNumber,
+    idempotencyKey: input.idempotencyKey,
     customer: input.customer,
     address: input.address,
     items: totals.snapshots,

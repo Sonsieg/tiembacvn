@@ -15,6 +15,7 @@ export const checkoutSchema = z.object({
   }),
   paymentMethod: z.enum(["cod", "bank_transfer", "online"]),
   couponCode: z.string().optional(),
+  idempotencyKey: z.string().min(12).max(120).optional(),
   items: z
     .array(
       z.object({

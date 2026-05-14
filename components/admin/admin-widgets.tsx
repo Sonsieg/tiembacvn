@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/form";
 import { AdminDropdown } from "@/components/admin/admin-dropdown";
 import { AdminDrawer } from "@/components/admin/shared/admin-overlays";
+import { OrderStatusEditor } from "@/components/admin/order-status-editor";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
-import type { Order, Product } from "@/types/commerce";
+import type { Order, OrderStatus, Product } from "@/types/commerce";
 
 export function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return <Card className="p-5"><p className="text-sm text-gray-500">{label}</p><b className="mt-2 block text-2xl text-ink">{value}</b><span className="text-xs text-claret">{hint}</span></Card>;
@@ -19,6 +20,8 @@ export function StatCard({ label, value, hint }: { label: string; value: string;
 
 export function OrdersTable({ orders }: { orders: Order[] }) {
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, OrderStatus>>({});
+  const [updatingOrderIds, setUpdatingOrderIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [payment, setPayment] = useState("all");
@@ -44,7 +47,24 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     resetPage();
   }
 
-  const filtered = orders.filter((order) => {
+  const displayedOrders = orders.map((order) => statusOverrides[order.id] ? { ...order, orderStatus: statusOverrides[order.id] } : order);
+
+  async function updateOrderStatus(order: Order, nextStatus: OrderStatus) {
+    setUpdatingOrderIds((current) => [...current, order.id]);
+    const response = await fetch(`/api/admin/orders/${order.id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderStatus: nextStatus }),
+    });
+
+    if (response.ok) {
+      setStatusOverrides((current) => ({ ...current, [order.id]: nextStatus }));
+    }
+
+    setUpdatingOrderIds((current) => current.filter((id) => id !== order.id));
+  }
+
+  const filtered = displayedOrders.filter((order) => {
     const haystack = `${order.orderNumber} ${order.customer.fullName} ${order.customer.phone}`.toLowerCase();
     return (!query || haystack.includes(query.toLowerCase()))
       && (status === "all" || order.orderStatus === status)
@@ -92,7 +112,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                   <td><StatusBadge tone={order.orderStatus}>{order.orderStatus}</StatusBadge></td>
                   <td><StatusBadge tone={order.paymentStatus}>{order.paymentStatus}</StatusBadge></td>
                   <td>
-                    <Select className="min-w-[170px]" aria-label="Chuyển trạng thái đơn" defaultValue={order.orderStatus}>
+                    <Select className="min-w-[170px]" aria-label="Chuyển trạng thái đơn" value={order.orderStatus} disabled={updatingOrderIds.includes(order.id)} onChange={(event) => updateOrderStatus(order, event.target.value as OrderStatus)}>
                       <option value="pending">Chờ xác nhận</option>
                       <option value="confirmed">Đã xác nhận</option>
                       <option value="processing">Đang xử lý</option>
@@ -139,8 +159,8 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
           </div>
         ) : null}
       </div>
-      <AdminDrawer open={Boolean(activeOrder)} title="Chi tiết đơn hàng" description="Xem nhanh và cập nhật đơn mà không rời khỏi danh sách." onClose={() => setActiveOrder(null)} width="max-w-2xl" footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setActiveOrder(null)}>Đóng</Button><Button>Ghi chú / cập nhật</Button></div>}>
-        {activeOrder ? <OrderDetail order={activeOrder} /> : null}
+      <AdminDrawer open={Boolean(activeOrder)} title="Chi tiết đơn hàng" description="Xem nhanh và cập nhật đơn mà không rời khỏi danh sách." onClose={() => setActiveOrder(null)} width="max-w-3xl" footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setActiveOrder(null)}>Đóng</Button></div>}>
+        {activeOrder ? <OrderDetail order={activeOrder} onUpdated={(order) => { setActiveOrder(order); setStatusOverrides((current) => ({ ...current, [order.id]: order.orderStatus })); }} /> : null}
       </AdminDrawer>
     </>
   );
@@ -157,15 +177,16 @@ function StatusBadge({ children, tone }: { children: ReactNode; tone: string }) 
   return <Badge className={className}>{children}</Badge>;
 }
 
-function OrderDetail({ order }: { order: Order }) {
+function OrderDetail({ order, onUpdated }: { order: Order; onUpdated?: (order: Order) => void }) {
   return (
     <div className="grid gap-5">
       <section className="admin-panel">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h3 className="font-semibold text-ink">{order.orderNumber}</h3><p className="text-sm text-slate-muted">{formatDate(order.createdAt)}</p></div>
-          <div className="flex flex-wrap gap-2"><StatusBadge tone={order.orderStatus}>{order.orderStatus}</StatusBadge><StatusBadge tone={order.paymentStatus}>{order.paymentStatus}</StatusBadge></div>
+          <div className="flex flex-wrap gap-2"><StatusBadge tone={order.orderStatus}>{order.orderStatus}</StatusBadge><StatusBadge tone={order.paymentStatus}>{order.paymentStatus}</StatusBadge><StatusBadge tone={order.fulfillmentStatus}>{order.fulfillmentStatus}</StatusBadge></div>
         </div>
       </section>
+      <OrderStatusEditor order={order} onUpdated={onUpdated} />
       <section className="admin-panel"><h3 className="font-semibold text-ink">Khách hàng</h3><p className="mt-2 font-medium">{order.customer.fullName} · {order.customer.phone}</p><p className="mt-1 text-sm text-gray-600">{order.address.addressLine}, {order.address.ward}, {order.address.district}, {order.address.province}</p>{order.address.note ? <p className="mt-1 text-sm text-warning">{order.address.note}</p> : null}</section>
       <section className="admin-panel">
         <h3 className="font-semibold text-ink">Sản phẩm</h3>
