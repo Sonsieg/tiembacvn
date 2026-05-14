@@ -10,9 +10,11 @@ import { Input } from "@/components/ui/form";
 import { ProductUpsertDrawer } from "@/components/admin/product-upsert-drawer";
 import { ActiveAdminFilters, AdminProductFilterDrawer, type AdminProductFilters } from "@/components/admin/product-filter-drawer";
 import { AdminDropdown } from "@/components/admin/admin-dropdown";
+import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/utils/format";
 
 export function ProductAdminWorkspace({ products, categories, collections }: { products: Product[]; categories: Category[]; collections: Collection[] }) {
+  const toast = useToast();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<AdminProductFilters>({ statuses: [], categories: [], collections: [], stock: [], tags: [], minPrice: "", maxPrice: "" });
   const [sort, setSort] = useState("updated");
@@ -111,10 +113,16 @@ export function ProductAdminWorkspace({ products, categories, collections }: { p
 
   function confirmStatusToggle() {
     if (!statusTarget) return;
+    const nextStatus = statusTarget.status === "active" ? "inactive" : "active";
     setStatusOverrides((current) => ({
       ...current,
-      [statusTarget.id]: statusTarget.status === "active" ? "inactive" : "active",
+      [statusTarget.id]: nextStatus,
     }));
+    toast({
+      tone: "success",
+      title: nextStatus === "active" ? "Đã active sản phẩm" : "Đã inactive sản phẩm",
+      description: `${statusTarget.title} đã được cập nhật ở UI preview.`,
+    });
     setStatusTarget(null);
   }
 
@@ -159,7 +167,7 @@ export function ProductAdminWorkspace({ products, categories, collections }: { p
           <span className="text-sm font-semibold text-claret">Đã chọn {selected.length} sản phẩm</span>
           <div className="flex flex-wrap gap-2">
             {["Đưa về Active", "Chuyển Draft", "Archive", "Gắn collection", "Cập nhật tag"].map((label) => <Button key={label} type="button" variant="secondary" size="sm" onClick={() => setConfirmOpen(true)}>{label}</Button>)}
-            <Button type="button" size="sm" onClick={() => setSelected([])}>Bỏ chọn</Button>
+            <Button type="button" size="sm" onClick={() => { setSelected([]); toast({ tone: "info", title: "Đã bỏ chọn", description: "Danh sách chọn hàng loạt đã được làm trống." }); }}>Bỏ chọn</Button>
           </div>
         </div>
       ) : null}
@@ -222,7 +230,7 @@ export function ProductAdminWorkspace({ products, categories, collections }: { p
       <ProductUpsertDrawer key={createOpen ? "create-open" : "create-closed"} open={createOpen} categories={categories} collections={collections} onClose={() => setCreateOpen(false)} />
       <ProductUpsertDrawer key={editing?.id ?? "edit-closed"} open={Boolean(editing)} product={editing} categories={categories} collections={collections} onClose={() => setEditing(null)} />
       <ProductQuickViewDrawer product={viewing} onClose={() => setViewing(null)} onEdit={(product) => { setViewing(null); setEditing(product); }} />
-      <ConfirmDialog open={confirmOpen} description="Thao tác này đang ở chế độ UI preview. Khi nối write API, hệ thống sẽ cập nhật các sản phẩm đã chọn sau bước xác nhận." onConfirm={() => setConfirmOpen(false)} onClose={() => setConfirmOpen(false)} />
+      <ConfirmDialog open={confirmOpen} description="Thao tác này đang ở chế độ UI preview. Khi nối write API, hệ thống sẽ cập nhật các sản phẩm đã chọn sau bước xác nhận." onConfirm={() => { toast({ tone: "info", title: "Thao tác preview", description: "Chưa ghi database vì API write sản phẩm chưa được nối." }); setConfirmOpen(false); }} onClose={() => setConfirmOpen(false)} />
       <ConfirmDialog
         open={Boolean(statusTarget)}
         title={statusTarget?.status === "active" ? "Inactive sản phẩm?" : "Active sản phẩm?"}

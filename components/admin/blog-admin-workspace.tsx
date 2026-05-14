@@ -8,6 +8,7 @@ import { AdminModal, ConfirmDialog } from "@/components/admin/shared/admin-overl
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/form";
+import { useToast } from "@/components/ui/toast";
 import { formatDate, slugify } from "@/lib/utils/format";
 
 type SeoDraft = {
@@ -57,6 +58,7 @@ function createDraft(post?: BlogPost | null): SeoDraft {
 }
 
 export function BlogAdminWorkspace({ posts }: { posts: BlogPost[] }) {
+  const toast = useToast();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<BlogPost | null>(posts[0] ?? null);
   const [draft, setDraft] = useState<SeoDraft>(() => createDraft(posts[0] ?? null));
@@ -106,8 +108,11 @@ export function BlogAdminWorkspace({ posts }: { posts: BlogPost[] }) {
       setSelected(null);
       setPromptOpen(false);
       setJsonInput("");
+      toast({ tone: "success", title: "Đã áp dụng bản nháp SEO", description: "JSON đã được nạp vào form soạn bài." });
     } catch {
-      setJsonError("JSON không hợp lệ. Hãy dán đúng output JSON từ prompt SEO.");
+      const message = "JSON không hợp lệ. Hãy dán đúng output JSON từ prompt SEO.";
+      setJsonError(message);
+      toast({ tone: "danger", title: "Không đọc được JSON", description: message });
     }
   }
 
@@ -126,9 +131,16 @@ export function BlogAdminWorkspace({ posts }: { posts: BlogPost[] }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Không thể cập nhật bài viết");
       setStatusOverrides((current) => ({ ...current, [statusTarget.id]: nextStatus }));
+      toast({
+        tone: "success",
+        title: nextStatus === "published" ? "Đã active bài viết" : "Đã inactive bài viết",
+        description: statusTarget.title,
+      });
       setStatusTarget(null);
     } catch (error) {
-      setStatusError(error instanceof Error ? error.message : "Không thể cập nhật bài viết");
+      const message = error instanceof Error ? error.message : "Không thể cập nhật bài viết";
+      setStatusError(message);
+      toast({ tone: "danger", title: "Cập nhật bài viết thất bại", description: message });
     } finally {
       setUpdating(false);
     }
@@ -223,7 +235,7 @@ export function BlogAdminWorkspace({ posts }: { posts: BlogPost[] }) {
               ]}
             />
           </Field>
-          <Button type="button">Lưu bài viết</Button>
+          <Button type="button" onClick={() => toast({ tone: "info", title: "Đã lưu bản nháp bài viết", description: "Form blog đang ở UI preview; thao tác active/inactive đã có API ghi database." })}>Lưu bài viết</Button>
         </form>
       </div>
 

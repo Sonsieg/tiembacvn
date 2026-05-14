@@ -6,11 +6,13 @@ import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/form";
 import { Price } from "@/components/ui/price";
+import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/utils/format";
 import { siteConfig } from "@/lib/constants/site";
 import { useCartStore } from "@/store/cart.store";
 
 export function CartDrawer() {
+  const toast = useToast();
   const { items, isOpen, couponCode, closeCart, updateQuantity, removeItem, setCouponCode, subtotal } = useCartStore();
   const total = subtotal();
   const shipping = total >= siteConfig.freeShippingThreshold || total === 0 ? 0 : siteConfig.shippingFee;
@@ -55,7 +57,7 @@ export function CartDrawer() {
                             <Link href={`/products/${item.productSlug}`} onClick={closeCart} className="font-medium text-slate hover:text-cta">{item.title}</Link>
                             <p className="text-xs text-slate-muted">{item.variantTitle} · {item.sku}</p>
                           </div>
-                          <button aria-label="Xóa sản phẩm" className="text-slate-light hover:text-danger" onClick={() => removeItem(item.variantId)}><Trash2 className="h-4 w-4" /></button>
+                          <button aria-label="Xóa sản phẩm" className="text-slate-light hover:text-danger" onClick={() => { removeItem(item.variantId); toast({ tone: "info", title: "Đã xoá khỏi giỏ", description: item.title }); }}><Trash2 className="h-4 w-4" /></button>
                         </div>
                         <div className="flex items-center justify-between">
                           <Price value={item.unitPrice} />
@@ -81,7 +83,7 @@ export function CartDrawer() {
             </div>
 
             <div className="grid gap-4 border-t border-line bg-drawer-footer p-5">
-              <Input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} placeholder="Nhập mã giảm giá" />
+              <Input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} onBlur={() => { if (couponCode) toast({ tone: "info", title: "Mã giảm giá đã nhập", description: "Hệ thống sẽ kiểm tra mã khi đặt hàng." }); }} placeholder="Nhập mã giảm giá" />
               <div className="grid gap-2 text-sm">
                 <div className="flex justify-between"><span>Tạm tính</span><b>{formatCurrency(total)}</b></div>
                 <div className="flex justify-between"><span>Phí giao hàng</span><b>{shipping ? formatCurrency(shipping) : "Miễn phí"}</b></div>

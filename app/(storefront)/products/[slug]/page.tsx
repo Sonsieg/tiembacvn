@@ -8,6 +8,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { Card } from "@/components/ui/card";
 import { siteConfig } from "@/lib/constants/site";
 import { getProductBySlug, getRelatedProducts } from "@/lib/services/product.service";
+import { getProductVideos } from "@/lib/services/video.service";
 import { breadcrumbSchema, productSchema } from "@/lib/seo/schema";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -32,7 +33,8 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) notFound();
-  const related = await getRelatedProducts(product.id, product.categorySlugs);
+  const [related, videos] = await Promise.all([getRelatedProducts(product.id, product.categorySlugs), getProductVideos(product.id)]);
+  const reviewVideo = videos[0];
 
   return (
     <>
@@ -41,7 +43,7 @@ export default async function ProductPage({ params }: Props) {
       <section className="section">
         <div className="container-page grid gap-10 lg:grid-cols-[1fr_.9fr]">
           <ProductGallery images={product.images} title={product.title} />
-          <ProductInfo product={product} />
+          <ProductInfo product={product} reviewYoutubeUrl={reviewVideo?.youtubeUrl} />
         </div>
       </section>
       <section className="pb-16">

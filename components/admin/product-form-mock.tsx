@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import type { Category, Collection, Product, ProductVariant } from "@/types/commerce";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
+import { useToast } from "@/components/ui/toast";
 import { slugify } from "@/lib/utils/format";
 
 type EditableVariant = Pick<ProductVariant, "id" | "title" | "sku" | "size" | "color" | "price" | "compareAtPrice" | "active"> & {
@@ -29,6 +30,7 @@ export function ProductFormMock({
   categories: Category[];
   collections: Collection[];
 }) {
+  const toast = useToast();
   const [name, setName] = useState(product?.title ?? "");
   const slug = useMemo(() => slugify(name), [name]);
   const [status, setStatus] = useState(product?.status === "active" ? "active" : "draft");
@@ -50,6 +52,7 @@ export function ProductFormMock({
 
   function addVariant() {
     setVariants((current) => [...current, createVariant(slug || "san-pham", current.length + 1)]);
+    toast({ tone: "info", title: "Đã thêm biến thể", description: "Biến thể mới đang ở bản nháp sản phẩm." });
   }
 
   function updateVariant(index: number, patch: Partial<EditableVariant>) {
@@ -70,7 +73,7 @@ export function ProductFormMock({
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/products" className="admin-pill-link">Discard</Link>
-          <Button type="button"><Save size={16} /> Save product</Button>
+          <Button type="button" onClick={() => toast({ tone: "info", title: "Đã lưu bản nháp sản phẩm", description: "Form sản phẩm legacy đang ở UI preview, chưa ghi database." })}><Save size={16} /> Save product</Button>
         </div>
       </div>
 
@@ -130,7 +133,7 @@ export function ProductFormMock({
                   <Field label="Màu"><Input value={variant.color ?? "Bạc"} onChange={(event) => updateVariant(index, { color: event.target.value })} /></Field>
                   <Field label="Giá gốc"><Input type="number" value={variant.compareAtPrice ?? ""} onChange={(event) => updateVariant(index, { compareAtPrice: Number(event.target.value) || undefined })} /></Field>
                   <Field label="Trạng thái"><Select value={variant.active ? "active" : "inactive"} onChange={(event) => updateVariant(index, { active: event.target.value === "active" })}><option value="active">Active</option><option value="inactive">Inactive</option></Select></Field>
-                  <button type="button" className="admin-icon-danger" onClick={() => setVariants((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label="Xóa biến thể"><Trash2 size={16} /></button>
+                  <button type="button" className="admin-icon-danger" onClick={() => { setVariants((current) => current.filter((_, itemIndex) => itemIndex !== index)); toast({ tone: "warning", title: "Đã xoá biến thể", description: "Biến thể đã bị xoá khỏi bản nháp." }); }} aria-label="Xóa biến thể"><Trash2 size={16} /></button>
                 </div>
               ))}
             </div>
@@ -162,7 +165,7 @@ export function ProductFormMock({
                 <p className="eyebrow">Media</p>
                 <h2>Ảnh bằng URL</h2>
               </div>
-              <button type="button" className="admin-action-button" onClick={() => setMediaUrls((current) => [...current, ""])}><ImagePlus size={16} /> Add</button>
+              <button type="button" className="admin-action-button" onClick={() => { setMediaUrls((current) => [...current, ""]); toast({ tone: "info", title: "Đã thêm ô ảnh", description: "Dán URL ảnh để preview sản phẩm." }); }}><ImagePlus size={16} /> Add</button>
             </div>
             <div className="admin-media-grid">
               {mediaUrls.map((url, index) => (

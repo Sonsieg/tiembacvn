@@ -6,11 +6,13 @@ import { motion } from "framer-motion";
 import type { Product } from "@/types/commerce";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { useCartStore } from "@/store/cart.store";
 import { useFavoriteStore } from "@/store/favorite.store";
 import { cn, formatCurrency } from "@/lib/utils/format";
 
 export function ProductCard({ product }: { product: Product }) {
+  const toast = useToast();
   const variant = product.variants[0];
   const addItem = useCartStore((state) => state.addItem);
   const toggleFavorite = useFavoriteStore((state) => state.toggleFavorite);
@@ -37,6 +39,7 @@ export function ProductCard({ product }: { product: Product }) {
           onClick={(event) => {
             event.preventDefault();
             toggleFavorite(product.id);
+            toast({ tone: "success", title: isFavorite ? "Đã bỏ yêu thích" : "Đã thêm yêu thích", description: product.title });
           }}
         >
           <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
@@ -67,7 +70,10 @@ export function ProductCard({ product }: { product: Product }) {
           className="mt-auto h-12 w-full"
           disabled={!canBuy}
           onClick={() => {
-            if (!canBuy) return;
+            if (!canBuy) {
+              toast({ tone: "warning", title: "Chưa thể thêm vào giỏ", description: "Sản phẩm đang hết hàng hoặc inactive." });
+              return;
+            }
             addItem({
               productId: product.id,
               variantId: variant.id,
@@ -80,6 +86,7 @@ export function ProductCard({ product }: { product: Product }) {
               compareAtPrice: variant.compareAtPrice,
               quantity: 1,
             });
+            toast({ tone: "success", title: "Đã thêm vào giỏ", description: product.title });
           }}
         >
           <ShoppingBag className="h-4 w-4" />

@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Heart, Ruler, ShieldCheck, ShoppingBag, Sparkles, Truck } from "lucide-react";
+import { Heart, Play, Ruler, ShieldCheck, ShoppingBag, Sparkles, Truck } from "lucide-react";
 import type { Product } from "@/types/commerce";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Price } from "@/components/ui/price";
+import { useToast } from "@/components/ui/toast";
 import { useCartStore } from "@/store/cart.store";
 import { useFavoriteStore } from "@/store/favorite.store";
 import { cn } from "@/lib/utils/format";
 
-export function ProductInfo({ product }: { product: Product }) {
+export function ProductInfo({ product, reviewYoutubeUrl }: { product: Product; reviewYoutubeUrl?: string }) {
+  const toast = useToast();
   const [variantId, setVariantId] = useState(product.variants[0].id);
   const [quantity, setQuantity] = useState(1);
   const variant = product.variants.find((entry) => entry.id === variantId) ?? product.variants[0];
@@ -22,7 +24,10 @@ export function ProductInfo({ product }: { product: Product }) {
   const favorite = useFavoriteStore((state) => state.isFavorite(product.id));
 
   const addToCart = () => {
-    if (!canBuy) return;
+    if (!canBuy) {
+      toast({ tone: "warning", title: "Chưa thể thêm vào giỏ", description: "Sản phẩm hoặc biến thể này đang hết hàng." });
+      return;
+    }
 
     addItem({
       productId: product.id,
@@ -36,6 +41,7 @@ export function ProductInfo({ product }: { product: Product }) {
       compareAtPrice: variant.compareAtPrice,
       quantity,
     });
+    toast({ tone: "success", title: "Đã thêm vào giỏ", description: `${product.title} · ${variant.title} x${quantity}` });
   };
 
   return (
@@ -92,10 +98,15 @@ export function ProductInfo({ product }: { product: Product }) {
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
         <Button disabled={!canBuy} onClick={addToCart}><ShoppingBag className="h-4 w-4" /> Thêm vào giỏ</Button>
         {canBuy ? <ButtonLink href="/checkout" variant="dark" onClick={addToCart}>Mua ngay</ButtonLink> : <Button type="button" variant="dark" disabled>Mua ngay</Button>}
-        <Button aria-label="Yêu thích" variant="secondary" size="icon" onClick={() => toggleFavorite(product.id)}>
+        <Button aria-label="Yêu thích" variant="secondary" size="icon" onClick={() => { toggleFavorite(product.id); toast({ tone: "success", title: favorite ? "Đã bỏ yêu thích" : "Đã thêm yêu thích", description: product.title }); }}>
           <Heart className={cn("h-4 w-4", favorite && "fill-current text-claret")} />
         </Button>
       </div>
+      {reviewYoutubeUrl ? (
+        <ButtonLink href={reviewYoutubeUrl} target="_blank" rel="noreferrer" variant="secondary" className="w-full">
+          <Play className="h-4 w-4 fill-current" /> Xem review
+        </ButtonLink>
+      ) : null}
 
       <div className="grid gap-2 text-sm text-gray-600 sm:grid-cols-2">
         {[

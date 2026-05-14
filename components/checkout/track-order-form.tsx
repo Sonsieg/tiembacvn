@@ -5,10 +5,12 @@ import { PackageSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/form";
 import { Card } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { Order } from "@/types/commerce";
 
 export function TrackOrderForm({ initialOrder }: { initialOrder?: string }) {
+  const toast = useToast();
   const [orderNumber, setOrderNumber] = useState(initialOrder ?? "");
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [order, setOrder] = useState<Order | null>(null);
@@ -24,8 +26,14 @@ export function TrackOrderForm({ initialOrder }: { initialOrder?: string }) {
       body: JSON.stringify({ orderNumber, emailOrPhone }),
     });
     const data = await response.json();
-    if (!response.ok) return setError(data.error ?? "Không tìm thấy đơn hàng");
+    if (!response.ok) {
+      const message = data.error ?? "Không tìm thấy đơn hàng";
+      setError(message);
+      toast({ tone: "danger", title: "Tra cứu thất bại", description: message });
+      return;
+    }
     setOrder(data.order);
+    toast({ tone: "success", title: "Đã tìm thấy đơn hàng", description: data.order.orderNumber });
   }
 
   return (

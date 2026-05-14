@@ -11,6 +11,7 @@ import { Input, Select } from "@/components/ui/form";
 import { AdminDropdown } from "@/components/admin/admin-dropdown";
 import { AdminDrawer } from "@/components/admin/shared/admin-overlays";
 import { OrderStatusEditor } from "@/components/admin/order-status-editor";
+import { useToast } from "@/components/ui/toast";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { Order, OrderStatus, Product } from "@/types/commerce";
 
@@ -19,6 +20,7 @@ export function StatCard({ label, value, hint }: { label: string; value: string;
 }
 
 export function OrdersTable({ orders }: { orders: Order[] }) {
+  const toast = useToast();
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, OrderStatus>>({});
   const [updatingOrderIds, setUpdatingOrderIds] = useState<string[]>([]);
@@ -51,17 +53,21 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
 
   async function updateOrderStatus(order: Order, nextStatus: OrderStatus) {
     setUpdatingOrderIds((current) => [...current, order.id]);
-    const response = await fetch(`/api/admin/orders/${order.id}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderStatus: nextStatus }),
-    });
-
-    if (response.ok) {
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderStatus: nextStatus }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? "Không thể cập nhật đơn hàng");
       setStatusOverrides((current) => ({ ...current, [order.id]: nextStatus }));
+      toast({ tone: "success", title: "Đã cập nhật đơn hàng", description: `${order.orderNumber} chuyển sang ${nextStatus}.` });
+    } catch (error) {
+      toast({ tone: "danger", title: "Cập nhật đơn thất bại", description: error instanceof Error ? error.message : "Không thể cập nhật đơn hàng" });
+    } finally {
+      setUpdatingOrderIds((current) => current.filter((id) => id !== order.id));
     }
-
-    setUpdatingOrderIds((current) => current.filter((id) => id !== order.id));
   }
 
   const filtered = displayedOrders.filter((order) => {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { siteConfig } from "@/lib/constants/site";
+import { ToastProvider } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -43,7 +44,9 @@ export default function RootLayout({
       lang="vi"
       className="h-full scroll-smooth antialiased"
     >
-      <body className="min-h-full bg-pearl text-ink">{children}</body>
+      <body className="min-h-full bg-pearl text-ink">
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

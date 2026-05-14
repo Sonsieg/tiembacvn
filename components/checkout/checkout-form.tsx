@@ -8,12 +8,14 @@ import { Banknote, Check, CreditCard, Landmark, PackageCheck, ShieldCheck, Truck
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/form";
 import { CartSummary } from "@/components/cart/cart-summary";
+import { useToast } from "@/components/ui/toast";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validations/checkout";
 import { useCartStore } from "@/store/cart.store";
 import { cn } from "@/lib/utils/format";
 
 export function CheckoutForm() {
   const router = useRouter();
+  const toast = useToast();
   const items = useCartStore((state) => state.items);
   const couponCode = useCartStore((state) => state.couponCode);
   const clearCart = useCartStore((state) => state.clearCart);
@@ -50,13 +52,18 @@ export function CheckoutForm() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error ?? "Không thể tạo đơn hàng. Vui lòng kiểm tra lại thông tin hoặc thử lại sau.");
+        const message = data.error ?? "Không thể tạo đơn hàng. Vui lòng kiểm tra lại thông tin hoặc thử lại sau.";
+        setError(message);
+        toast({ tone: "danger", title: "Đặt hàng thất bại", description: message });
         return;
       }
+      toast({ tone: "success", title: "Đã tạo đơn hàng", description: `Mã đơn ${data.order.orderNumber}.` });
       clearCart();
       router.push(`/order-success?order=${data.order.orderNumber}`);
     } catch {
-      setError("Kết nối không ổn định. Đơn hàng chưa được xác nhận trên trình duyệt này, vui lòng thử lại.");
+      const message = "Kết nối không ổn định. Đơn hàng chưa được xác nhận trên trình duyệt này, vui lòng thử lại.";
+      setError(message);
+      toast({ tone: "danger", title: "Không thể kết nối", description: message });
     } finally {
       setLoading(false);
     }

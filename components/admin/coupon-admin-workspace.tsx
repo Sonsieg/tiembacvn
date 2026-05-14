@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/form";
 import { AdminDropdown } from "@/components/admin/admin-dropdown";
 import { ConfirmDialog } from "@/components/admin/shared/admin-overlays";
+import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/utils/format";
 
 const couponTypeLabels: Record<string, string> = {
@@ -16,6 +17,7 @@ const couponTypeLabels: Record<string, string> = {
 };
 
 export function CouponAdminWorkspace({ coupons }: { coupons: Coupon[] }) {
+  const toast = useToast();
   const [query, setQuery] = useState("");
   const [type, setType] = useState("percentage");
   const [status, setStatus] = useState("active");
@@ -41,9 +43,16 @@ export function CouponAdminWorkspace({ coupons }: { coupons: Coupon[] }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Không thể cập nhật coupon");
       setStatusOverrides((current) => ({ ...current, [statusTarget.id]: nextActive }));
+      toast({
+        tone: "success",
+        title: nextActive ? "Đã active coupon" : "Đã inactive coupon",
+        description: `${statusTarget.code} đã được cập nhật.`,
+      });
       setStatusTarget(null);
     } catch (error) {
-      setStatusError(error instanceof Error ? error.message : "Không thể cập nhật coupon");
+      const message = error instanceof Error ? error.message : "Không thể cập nhật coupon";
+      setStatusError(message);
+      toast({ tone: "danger", title: "Cập nhật coupon thất bại", description: message });
     } finally {
       setUpdating(false);
     }
@@ -126,7 +135,7 @@ export function CouponAdminWorkspace({ coupons }: { coupons: Coupon[] }) {
           <div className="rounded-sm border border-line bg-ivory-soft p-4 text-sm text-slate-muted">
             PERCENT nên dùng cho đơn tối thiểu cao và giới hạn phần trăm thấp. VND dễ kiểm soát biên lợi nhuận hơn, đặc biệt khi đặt giá trị nhỏ hơn phần lãi gộp dự kiến của đơn tối thiểu.
           </div>
-          <Button type="button">Lưu coupon</Button>
+          <Button type="button" onClick={() => toast({ tone: "info", title: "Đã lưu bản nháp coupon", description: "Form coupon đang ở UI preview; thao tác active/inactive đã có API ghi database." })}>Lưu coupon</Button>
         </form>
       </div>
       <ConfirmDialog

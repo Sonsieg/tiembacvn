@@ -2,11 +2,18 @@
 
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
 
 export function AdminLogoutButton() {
   const router = useRouter();
+  const toast = useToast();
   async function logout() {
-    await fetch("/api/admin/login", { method: "DELETE" });
+    const response = await fetch("/api/admin/login", { method: "DELETE" });
+    if (!response.ok) {
+      toast({ tone: "danger", title: "Đăng xuất thất bại", description: "Vui lòng thử lại." });
+      return;
+    }
+    toast({ tone: "success", title: "Đã đăng xuất", description: "Phiên admin đã kết thúc." });
     router.replace("/admin/login");
   }
   return (

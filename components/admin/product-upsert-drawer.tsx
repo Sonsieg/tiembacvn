@@ -6,6 +6,7 @@ import type { Category, Collection, Product, ProductVariant } from "@/types/comm
 import { AdminDrawer, ConfirmDialog } from "@/components/admin/shared/admin-overlays";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
+import { useToast } from "@/components/ui/toast";
 import { ImageUploader, PriceInput, SearchableMultiSelect, SlugInput, TagSelector, YoutubeUrlInput } from "@/components/form/advanced-fields";
 import { formatCurrency, slugify } from "@/lib/utils/format";
 
@@ -18,6 +19,7 @@ type EditableVariant = Pick<ProductVariant, "id" | "title" | "sku" | "size" | "c
 };
 
 export function ProductUpsertDrawer({ open, product, categories, collections, onClose }: { open: boolean; product?: Product | null; categories: Category[]; collections: Collection[]; onClose: () => void }) {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [dirty, setDirty] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
@@ -56,11 +58,22 @@ export function ProductUpsertDrawer({ open, product, categories, collections, on
   function addVariant() {
     setVariants((current) => [...current, createVariantDraft(product?.id ?? "new", current.length)]);
     markDirty();
+    toast({ tone: "info", title: "Đã thêm biến thể", description: "Biến thể mới đang ở bản nháp sản phẩm." });
   }
 
   function removeVariant(index: number) {
     setVariants((current) => current.length > 1 ? current.filter((_, itemIndex) => itemIndex !== index) : current);
     markDirty();
+    toast({ tone: "warning", title: "Đã xoá biến thể khỏi bản nháp", description: "Nhấn lưu sản phẩm để ghi thay đổi khi API write được nối." });
+  }
+
+  function savePreview() {
+    setDirty(false);
+    toast({
+      tone: "info",
+      title: product ? "Đã lưu bản nháp chỉnh sửa" : "Đã tạo bản nháp sản phẩm",
+      description: "Form sản phẩm hiện là UI preview, chưa ghi dữ liệu xuống database.",
+    });
   }
 
   return (
@@ -74,7 +87,7 @@ export function ProductUpsertDrawer({ open, product, categories, collections, on
         footer={
           <div className="flex flex-wrap justify-end gap-3">
             <Button type="button" variant="secondary" onClick={requestClose}>Hủy</Button>
-            <Button type="button"><Save className="h-4 w-4" /> Lưu sản phẩm</Button>
+            <Button type="button" onClick={savePreview}><Save className="h-4 w-4" /> Lưu sản phẩm</Button>
           </div>
         }
       >

@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Field, Input, Textarea } from "@/components/ui/form";
 import { AdminDropdown } from "@/components/admin/admin-dropdown";
+import { useToast } from "@/components/ui/toast";
 
 type EntityRow = Record<string, string | number | boolean | undefined>;
 type EntityType = "categories" | "collections";
 
-export function EntityManager({ eyebrow, title, description, fields, rows, entity }: { eyebrow: string; title: string; description: string; fields: string[]; rows: EntityRow[]; entity: EntityType }) {
+export function EntityManager({ eyebrow, title, description, fields, rows, entity }: { eyebrow: string; title: string; description: string; fields: string[]; rows: EntityRow[]; entity?: EntityType }) {
+  const toast = useToast();
   const [mode, setMode] = useState<"create" | "edit" | "view" | null>(null);
   const [row, setRow] = useState<EntityRow | null>(null);
   const [query, setQuery] = useState("");
@@ -40,17 +42,26 @@ export function EntityManager({ eyebrow, title, description, fields, rows, entit
     const nextActive = !isActive(statusTarget);
 
     try {
-      const response = await fetch("/api/admin/entities/status", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entity, id, active: nextActive }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Không thể cập nhật trạng thái");
+      if (entity) {
+        const response = await fetch("/api/admin/entities/status", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ entity, id, active: nextActive }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? "Không thể cập nhật trạng thái");
+      }
       setStatusOverrides((current) => ({ ...current, [id]: nextActive }));
+      toast({
+        tone: "success",
+        title: nextActive ? "Đã active" : "Đã inactive",
+        description: `${String(statusTarget.Tên ?? title)} đã được cập nhật trạng thái.`,
+      });
       setStatusTarget(null);
     } catch (error) {
-      setStatusError(error instanceof Error ? error.message : "Không thể cập nhật trạng thái");
+      const message = error instanceof Error ? error.message : "Không thể cập nhật trạng thái";
+      setStatusError(message);
+      toast({ tone: "danger", title: "Cập nhật thất bại", description: message });
     } finally {
       setUpdating(false);
     }
@@ -111,7 +122,7 @@ export function EntityManager({ eyebrow, title, description, fields, rows, entit
         description="Thao tác nhanh bằng drawer để giữ ngữ cảnh danh sách."
         onClose={() => setMode(null)}
         width="max-w-2xl"
-        footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setMode(null)}>Hủy</Button>{mode !== "view" ? <Button>Lưu thay đổi</Button> : null}</div>}
+        footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setMode(null)}>Hủy</Button>{mode !== "view" ? <Button onClick={() => { toast({ tone: entity ? "info" : "warning", title: "Đã lưu bản nháp", description: entity ? "Form thêm/sửa đang ở UI preview, thao tác active/inactive mới ghi database." : "Trang này đang ở chế độ preview, chưa có API ghi database." }); setMode(null); }}>Lưu thay đổi</Button> : null}</div>}
       >
         <div className="admin-panel grid gap-4">
           {fields.slice(0, 6).map((field) => {

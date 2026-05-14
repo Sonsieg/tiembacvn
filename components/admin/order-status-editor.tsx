@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Select, Textarea } from "@/components/ui/form";
+import { useToast } from "@/components/ui/toast";
 import type { FulfillmentStatus, Order, OrderStatus, PaymentStatus } from "@/types/commerce";
 
 export function OrderStatusEditor({ order, onUpdated }: { order: Order; onUpdated?: (order: Order) => void }) {
   const router = useRouter();
+  const toast = useToast();
   const [orderStatus, setOrderStatus] = useState<OrderStatus>(order.orderStatus);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(order.paymentStatus);
   const [fulfillmentStatus, setFulfillmentStatus] = useState<FulfillmentStatus>(order.fulfillmentStatus);
@@ -28,12 +30,15 @@ export function OrderStatusEditor({ order, onUpdated }: { order: Order; onUpdate
     setSaving(false);
 
     if (!response.ok) {
-      setMessage(data.error ?? "Không thể cập nhật đơn hàng");
+      const errorMessage = data.error ?? "Không thể cập nhật đơn hàng";
+      setMessage(errorMessage);
+      toast({ tone: "danger", title: "Cập nhật đơn thất bại", description: errorMessage });
       return;
     }
 
     setNote("");
     setMessage("Đã cập nhật trạng thái đơn hàng.");
+    toast({ tone: "success", title: "Đã cập nhật trạng thái", description: `${order.orderNumber} đã được ghi vào timeline.` });
     onUpdated?.(data.order);
     router.refresh();
   }

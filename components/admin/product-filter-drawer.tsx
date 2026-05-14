@@ -6,6 +6,7 @@ import type { Category, Collection } from "@/types/commerce";
 import { AdminDrawer } from "@/components/admin/shared/admin-overlays";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form";
+import { useToast } from "@/components/ui/toast";
 import { FilterChip } from "@/components/filter/filter-components";
 
 export type AdminProductFilters = {
@@ -23,8 +24,12 @@ const stockOptions = [["in-stock", "Còn hàng"], ["out-stock", "Hết hàng"], 
 const tagOptions = [["new", "New"], ["best", "Best seller"], ["sale", "Sale"], ["featured", "Featured"]];
 
 export function AdminProductFilterDrawer({ categories, collections, filters, onChange }: { categories: Category[]; collections: Collection[]; filters: AdminProductFilters; onChange: (filters: AdminProductFilters) => void }) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
-  const reset = () => onChange({ statuses: [], categories: [], collections: [], stock: [], tags: [], minPrice: "", maxPrice: "" });
+  const reset = () => {
+    onChange({ statuses: [], categories: [], collections: [], stock: [], tags: [], minPrice: "", maxPrice: "" });
+    toast({ tone: "info", title: "Đã xoá bộ lọc", description: "Danh sách sản phẩm đã trở về trạng thái mặc định." });
+  };
   return (
     <>
       <Button type="button" variant="secondary" onClick={() => setOpen(true)}><Filter className="h-4 w-4" /> Bộ lọc</Button>
@@ -34,7 +39,7 @@ export function AdminProductFilterDrawer({ categories, collections, filters, onC
         description="Lọc nhanh theo trạng thái, danh mục, bộ sưu tập, tồn kho và tag hiển thị."
         onClose={() => setOpen(false)}
         width="max-w-2xl"
-        footer={<div className="grid grid-cols-2 gap-3"><Button type="button" variant="secondary" onClick={reset}>Xóa lọc</Button><Button type="button" onClick={() => setOpen(false)}>Áp dụng lọc</Button></div>}
+        footer={<div className="grid grid-cols-2 gap-3"><Button type="button" variant="secondary" onClick={reset}>Xóa lọc</Button><Button type="button" onClick={() => { toast({ tone: "success", title: "Đã áp dụng bộ lọc", description: "Danh sách sản phẩm đã được lọc theo lựa chọn hiện tại." }); setOpen(false); }}>Áp dụng lọc</Button></div>}
       >
         <div className="grid gap-6">
           <AdminFilterGroup title="Trạng thái sản phẩm" options={statusOptions} values={filters.statuses} onToggle={(value) => onChange({ ...filters, statuses: toggle(filters.statuses, value) })} />

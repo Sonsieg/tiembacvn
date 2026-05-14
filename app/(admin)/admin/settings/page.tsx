@@ -1,6 +1,5 @@
 import { Field, Input, Textarea } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { StorefrontSectionSettings } from "@/components/admin/admin-settings-form";
+import { SettingsSaveButton, StorefrontSectionSettings } from "@/components/admin/admin-settings-form";
 
 export default function AdminSettingsPage() {
   return (
@@ -22,7 +21,7 @@ export default function AdminSettingsPage() {
           <Field label="Miễn phí vận chuyển từ"><Input defaultValue="900000" /></Field>
           <Field label="SEO title mặc định"><Input defaultValue="Tiembac.vn — Trang sức bạc S925 cao cấp" /></Field>
           <Field label="SEO description mặc định"><Textarea defaultValue="Trang sức bạc S925 thanh lịch, hiện đại và được chọn lọc cho từng khoảnh khắc." /></Field>
-          <Button type="button">Lưu cài đặt</Button>
+          <SettingsSaveButton />
         </aside>
       </div>
     </div>

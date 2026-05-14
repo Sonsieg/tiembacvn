@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import Image from "next/image";
+import { useToast } from "@/components/ui/toast";
 import logoMark from "@/assets/logo.png";
 
 type LoginStyles = Record<string, string>;
 
 export function AdminLoginForm({ styles }: { styles: LoginStyles }) {
   const router = useRouter();
+  const toast = useToast();
   const isDevelopment = process.env.NODE_ENV === "development";
   const [username, setUsername] = useState(isDevelopment ? "admin" : "");
   const [password, setPassword] = useState("");
@@ -32,10 +34,13 @@ export function AdminLoginForm({ styles }: { styles: LoginStyles }) {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Không thể đăng nhập");
+      const message = data.error ?? "Không thể đăng nhập";
+      setError(message);
+      toast({ tone: "danger", title: "Đăng nhập thất bại", description: message });
       return;
     }
 
+    toast({ tone: "success", title: "Đăng nhập thành công", description: "Đang chuyển vào trang quản trị." });
     router.replace("/admin/dashboard");
     router.refresh();
   }
