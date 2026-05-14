@@ -21,6 +21,7 @@ export type Collection = {
   description: string;
   image: string;
   featured?: boolean;
+  active?: boolean;
 };
 
 export type ProductVariant = {

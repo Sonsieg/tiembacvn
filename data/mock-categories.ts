@@ -59,6 +59,7 @@ export const collections: Collection[] = [
     description: "Thiết kế biểu tượng với ánh bạc tinh giản, sang và dễ đeo.",
     image: "https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?q=80&w=1400&auto=format&fit=crop",
     featured: true,
+    active: true,
   },
   {
     id: "col-gift",
@@ -67,6 +68,7 @@ export const collections: Collection[] = [
     description: "Trang sức bạc kèm gói quà tinh tế cho người thương.",
     image: "https://images.unsplash.com/photo-1543294001-f7cd5d7fb516?q=80&w=1400&auto=format&fit=crop",
     featured: true,
+    active: true,
   },
   {
     id: "col-minimal",
@@ -74,5 +76,6 @@ export const collections: Collection[] = [
     slug: "minimal-shine",
     description: "Đường nét mảnh, sáng và nữ tính cho phong cách tối giản.",
     image: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?q=80&w=1400&auto=format&fit=crop",
+    active: true,
   },
 ];

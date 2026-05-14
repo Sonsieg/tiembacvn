@@ -42,6 +42,7 @@ export function mapCollection(row: AnyRow): Collection {
     description: text(row.description),
     image: text(row.image),
     featured: bool(row.featured),
+    active: bool(row.active, true),
   };
 }
 

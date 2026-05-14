@@ -1,7 +1,7 @@
-import { getCollections } from "@/lib/services/product.service";
+import { getAdminCollections } from "@/lib/services/product.service";
 import { EntityManager } from "@/components/admin/entity-manager";
 
 export default async function AdminCollectionsPage() {
-  const collections = await getCollections();
-  return <EntityManager eyebrow="Collections" title="Bộ sưu tập" description="Tạo, sửa và xem nhanh collection trong drawer." fields={["Name", "Slug", "Description", "Image", "Featured", "Sort order"]} rows={collections.map((collection) => ({ Name: collection.name, Slug: collection.slug, Description: collection.description, Image: collection.image, Featured: collection.featured ? "Featured" : "Nhóm phụ" }))} />;
+  const collections = await getAdminCollections();
+  return <EntityManager eyebrow="Collections" title="Bộ sưu tập" description="Quản lý collection hiển thị ở storefront, ảnh đại diện, slug SEO và trạng thái active/inactive." fields={["Tên", "Slug", "Mô tả", "Ảnh", "Active", "Featured"]} rows={collections.map((collection) => ({ Tên: collection.name, Slug: collection.slug, "Mô tả": collection.description, Ảnh: collection.image, Active: collection.active === false ? "Inactive" : "Active", Featured: collection.featured ? "Featured" : "Nhóm phụ" }))} />;
 }

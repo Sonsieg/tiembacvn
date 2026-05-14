@@ -18,7 +18,7 @@ export async function getAdminDashboard() {
     pendingOrders,
     paidOrders,
     lowStock,
-    recentOrders: orders.slice(0, 6),
+    recentOrders: orders.slice(0, 10),
     bestSellers: products.filter((product) => product.bestSeller).slice(0, 5),
   };
 }

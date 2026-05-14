@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/form";
+import { Input, Select } from "@/components/ui/form";
 import { AdminDropdown } from "@/components/admin/admin-dropdown";
 import { AdminDrawer } from "@/components/admin/shared/admin-overlays";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -59,7 +59,10 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     <>
       <div className="grid gap-4">
         <div className="grid gap-3 border-b border-line p-4 lg:grid-cols-[1fr_190px_190px]">
-          <Input value={query} onChange={(event) => { setQuery(event.target.value); resetPage(); }} placeholder="Tìm mã đơn, khách hàng, số điện thoại..." />
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-muted" />
+            <Input className="!pl-12" value={query} onChange={(event) => { setQuery(event.target.value); resetPage(); }} placeholder="Tìm mã đơn, khách hàng, số điện thoại..." />
+          </div>
           <AdminDropdown ariaLabel="Lọc trạng thái đơn" value={status} onChange={updateStatus} options={[
             { value: "all", label: "Tất cả trạng thái" },
             { value: "pending", label: "Chờ xác nhận" },
@@ -88,19 +91,22 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                   <td className="font-semibold">{formatCurrency(order.grandTotal)}</td>
                   <td><StatusBadge tone={order.orderStatus}>{order.orderStatus}</StatusBadge></td>
                   <td><StatusBadge tone={order.paymentStatus}>{order.paymentStatus}</StatusBadge></td>
-                  <td><AdminDropdown ariaLabel="Chuyển trạng thái đơn" value={order.orderStatus} options={[
-                    { value: "pending", label: "Chờ xác nhận" },
-                    { value: "confirmed", label: "Đã xác nhận" },
-                    { value: "processing", label: "Đang xử lý" },
-                    { value: "shipped", label: "Đã gửi hàng" },
-                    { value: "completed", label: "Hoàn tất" },
-                    { value: "cancelled", label: "Đã hủy" },
-                  ]} /></td>
+                  <td>
+                    <Select className="min-w-[170px]" aria-label="Chuyển trạng thái đơn" defaultValue={order.orderStatus}>
+                      <option value="pending">Chờ xác nhận</option>
+                      <option value="confirmed">Đã xác nhận</option>
+                      <option value="processing">Đang xử lý</option>
+                      <option value="shipped">Đã gửi hàng</option>
+                      <option value="completed">Hoàn tất</option>
+                      <option value="cancelled">Đã hủy</option>
+                    </Select>
+                  </td>
                   <td>{formatDate(order.createdAt)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {!paginatedOrders.length ? <div className="border-t border-line p-8 text-center text-sm text-slate-muted">Không có đơn hàng phù hợp.</div> : null}
         </div>
         {totalPages > 1 || filtered.length > 10 ? (
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line p-4">
@@ -154,9 +160,34 @@ function StatusBadge({ children, tone }: { children: ReactNode; tone: string }) 
 function OrderDetail({ order }: { order: Order }) {
   return (
     <div className="grid gap-5">
-      <section className="admin-panel"><h3 className="font-semibold text-ink">Khách hàng</h3><p>{order.customer.fullName} · {order.customer.phone}</p><p className="text-sm text-gray-600">{order.address.addressLine}, {order.address.ward}, {order.address.district}, {order.address.province}</p></section>
-      <section className="admin-panel"><h3 className="font-semibold text-ink">Sản phẩm</h3>{order.items.map((item) => <div key={item.variantId} className="flex items-center justify-between border-t border-silver-200 py-3 first:border-t-0"><span>{item.title} x {item.quantity}</span><b>{formatCurrency(item.totalPrice)}</b></div>)}<div className="flex justify-between border-t border-silver-200 pt-3"><span>Tổng cộng</span><b>{formatCurrency(order.grandTotal)}</b></div></section>
-      <section className="admin-panel"><h3 className="font-semibold text-ink">Timeline</h3>{order.timeline.map((entry, index) => <p key={index} className="text-sm text-gray-600">{formatDate(entry.at)} · {entry.label} {entry.note ? `· ${entry.note}` : ""}</p>)}</section>
+      <section className="admin-panel">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><h3 className="font-semibold text-ink">{order.orderNumber}</h3><p className="text-sm text-slate-muted">{formatDate(order.createdAt)}</p></div>
+          <div className="flex flex-wrap gap-2"><StatusBadge tone={order.orderStatus}>{order.orderStatus}</StatusBadge><StatusBadge tone={order.paymentStatus}>{order.paymentStatus}</StatusBadge></div>
+        </div>
+      </section>
+      <section className="admin-panel"><h3 className="font-semibold text-ink">Khách hàng</h3><p className="mt-2 font-medium">{order.customer.fullName} · {order.customer.phone}</p><p className="mt-1 text-sm text-gray-600">{order.address.addressLine}, {order.address.ward}, {order.address.district}, {order.address.province}</p>{order.address.note ? <p className="mt-1 text-sm text-warning">{order.address.note}</p> : null}</section>
+      <section className="admin-panel">
+        <h3 className="font-semibold text-ink">Sản phẩm</h3>
+        <div className="mt-3 grid gap-3">
+          {order.items.map((item) => (
+            <div key={item.variantId} className="flex items-center justify-between gap-3 border-t border-silver-200 pt-3 first:border-t-0 first:pt-0">
+              <div className="flex items-center gap-3">
+                <img src={item.image} alt={item.title} className="h-12 w-12 rounded-sm object-cover" />
+                <span><b className="block text-ink">{item.title}</b><span className="text-xs text-slate-muted">{item.variantTitle} · {item.sku} · x{item.quantity}</span></span>
+              </div>
+              <b className="shrink-0">{formatCurrency(item.totalPrice)}</b>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-2 border-t border-silver-200 pt-4 text-sm">
+          <div className="flex justify-between"><span>Tạm tính</span><b>{formatCurrency(order.subtotal)}</b></div>
+          <div className="flex justify-between"><span>Giảm giá</span><b>{formatCurrency(order.discountTotal)}</b></div>
+          <div className="flex justify-between"><span>Phí vận chuyển</span><b>{formatCurrency(order.shippingFee)}</b></div>
+          <div className="flex justify-between text-base"><span>Tổng cộng</span><b className="text-cta">{formatCurrency(order.grandTotal)}</b></div>
+        </div>
+      </section>
+      <section className="admin-panel"><h3 className="font-semibold text-ink">Timeline</h3><div className="mt-3 grid gap-2">{order.timeline.map((entry, index) => <p key={index} className="rounded-sm border border-line bg-pearl p-3 text-sm text-gray-600">{formatDate(entry.at)} · {entry.label} {entry.note ? `· ${entry.note}` : ""}</p>)}</div></section>
     </div>
   );
 }

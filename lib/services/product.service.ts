@@ -58,9 +58,25 @@ export async function getCategories() {
   return categories.filter((category) => category.active);
 }
 
+export async function getAdminCategories() {
+  if (hasSupabaseEnv && supabase) {
+    const { data, error } = await supabase.from("categories").select("*").order("name");
+    if (!error && data?.length) return data.map(mapCategory);
+  }
+  return categories;
+}
+
 export async function getCollections() {
   if (hasSupabaseEnv && supabase) {
     const { data, error } = await supabase.from("collections").select("*").eq("active", true).order("featured", { ascending: false });
+    if (!error && data?.length) return data.map(mapCollection);
+  }
+  return collections.filter((collection) => collection.active !== false);
+}
+
+export async function getAdminCollections() {
+  if (hasSupabaseEnv && supabase) {
+    const { data, error } = await supabase.from("collections").select("*").order("featured", { ascending: false });
     if (!error && data?.length) return data.map(mapCollection);
   }
   return collections;
