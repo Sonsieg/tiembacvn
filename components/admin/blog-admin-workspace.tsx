@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, Edit3, Eye, Heading2, Italic, Link as LinkIcon, List, Plus, Search, Trash2, Type, Unlink } from "lucide-react";
+import { CheckCircle, ChevronLeft, ChevronRight, Edit3, Eye, Heading2, Italic, Link as LinkIcon, List, Plus, Search, Trash2, Type, Unlink } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -46,11 +46,27 @@ export function BlogAdminWorkspace({ posts }: { posts: BlogPost[] }) {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [statusTarget, setStatusTarget] = useState<BlogPost | null>(null);
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState("10");
 
   const filtered = useMemo(() => {
     const needle = query.toLowerCase();
     return items.filter((post) => `${post.title} ${post.slug} ${post.excerpt} ${post.seoTitle} ${post.seoDescription}`.toLowerCase().includes(needle));
   }, [items, query]);
+  const perPage = Number(itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const paginatedPosts = filtered.slice((safePage - 1) * perPage, safePage * perPage);
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    setPage(1);
+  }
+
+  function updateItemsPerPage(value: string) {
+    setItemsPerPage(value);
+    setPage(1);
+  }
 
   function openCreate() {
     setDraft(emptyDraft);
@@ -156,13 +172,13 @@ export function BlogAdminWorkspace({ posts }: { posts: BlogPost[] }) {
         <div className="border-b border-line p-4">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-muted" />
-            <Input className="!pl-12" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm tiêu đề, slug, mô tả..." />
+            <Input className="!pl-12" value={query} onChange={(event) => updateQuery(event.target.value)} placeholder="Tìm tiêu đề, slug, mô tả..." />
           </div>
         </div>
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead><tr><th className="p-4">Tên bài</th><th>Ảnh</th><th>Trạng thái</th><th>Ngày đăng</th><th>Thao tác</th></tr></thead>
           <tbody>
-            {filtered.map((post) => (
+            {paginatedPosts.map((post) => (
               <tr key={post.id} className="border-t border-silver-200">
                 <td className="p-4"><b className="block text-ink">{post.title}</b><span className="mt-1 block max-w-md truncate text-slate-muted">{post.excerpt}</span></td>
                 <td><img src={post.coverImage} alt="" className="h-14 w-20 rounded-sm object-cover" /></td>
@@ -183,6 +199,34 @@ export function BlogAdminWorkspace({ posts }: { posts: BlogPost[] }) {
           </tbody>
         </table>
         {!filtered.length ? <div className="border-t border-line p-8 text-center text-sm text-slate-muted">Không có bài viết phù hợp.</div> : null}
+        {totalPages > 1 || filtered.length > 10 ? (
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line p-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-muted">
+                Hiển thị {(safePage - 1) * perPage + 1} - {Math.min(safePage * perPage, filtered.length)} trên tổng số {filtered.length} bài viết
+              </span>
+              <select
+                className="h-8 rounded-sm border border-silver-200 bg-white px-2 text-sm outline-none hover:border-cta focus:border-cta focus:ring-2 focus:ring-cta/20"
+                value={itemsPerPage}
+                onChange={(event) => updateItemsPerPage(event.target.value)}
+                aria-label="Số lượng bài viết mỗi trang"
+              >
+                <option value="10">10 / trang</option>
+                <option value="20">20 / trang</option>
+                <option value="50">50 / trang</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="secondary" size="sm" disabled={safePage === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+                <ChevronLeft className="h-4 w-4" /> Trước
+              </Button>
+              <span className="text-sm font-medium text-ink">{safePage} / {totalPages}</span>
+              <Button type="button" variant="secondary" size="sm" disabled={safePage === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>
+                Sau <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <AdminModal open={modalOpen} title={draft.id ? "Sửa bài viết" : "Thêm bài viết"} onClose={() => setModalOpen(false)} width="max-w-6xl">

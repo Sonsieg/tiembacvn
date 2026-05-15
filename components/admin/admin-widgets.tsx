@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Loader2, Search, Zap } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input, Select } from "@/components/ui/form";
+import { Input } from "@/components/ui/form";
 import { AdminDropdown } from "@/components/admin/admin-dropdown";
 import { AdminDrawer } from "@/components/admin/shared/admin-overlays";
 import { OrderStatusEditor } from "@/components/admin/order-status-editor";
@@ -121,7 +121,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             ...Object.entries(paymentMethodLabels).map(([value, label]) => ({ value, label })),
           ]} />
         </div>
-        <div className="overflow-x-auto px-4 pb-4">
+        <div className="overflow-x-auto px-5 pb-28 pr-12 pt-1">
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="text-slate-muted"><tr><th className="p-3">Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Phương thức</th><th>Trạng thái</th><th>Thanh toán</th><th>Giao hàng</th><th>Cập nhật nhanh</th><th>Ngày tạo</th></tr></thead>
             <tbody>
@@ -135,10 +135,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                   <td><StatusBadge tone={order.paymentStatus}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge></td>
                   <td><StatusBadge tone={order.fulfillmentStatus}>{fulfillmentStatusLabels[order.fulfillmentStatus]}</StatusBadge></td>
                   <td>
-                    <Select className="min-w-[190px]" aria-label="Cập nhật nhanh đơn" value="" disabled={updatingOrderIds.includes(order.id)} onChange={(event) => event.target.value && runOrderAction(order, event.target.value as OrderWorkflowAction)}>
-                      <option value="">Chọn thao tác</option>
-                      {getOrderWorkflowActions(order).map((action) => <option key={action.value} value={action.value}>{action.label}</option>)}
-                    </Select>
+                    <QuickOrderActionMenu order={order} loading={updatingOrderIds.includes(order.id)} onRunAction={(action) => runOrderAction(order, action)} />
                   </td>
                   <td>{formatDate(order.createdAt)}</td>
                 </tr>
@@ -194,6 +191,101 @@ function StatusBadge({ children, tone }: { children: ReactNode; tone: string }) 
         ? "border-success/25 bg-success/10 text-success"
         : "border-cta/25 bg-cta-soft text-navy";
   return <Badge className={className}>{children}</Badge>;
+}
+
+function QuickOrderActionMenu({ order, loading, onRunAction }: { order: Order; loading: boolean; onRunAction: (action: OrderWorkflowAction) => void }) {
+  const [open, setOpen] = useState(false);
+  const menuId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const actions = getOrderWorkflowActions(order);
+  const disabled = loading || actions.length === 0;
+
+  useEffect(() => {
+    if (!open) return;
+
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative min-w-[210px]">
+      <button
+        type="button"
+        aria-label={`Thao tác nhanh đơn ${order.orderNumber}`}
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+        className="group flex h-11 w-full items-center justify-between gap-3 rounded-sm border border-line bg-pearl px-3 text-left text-sm text-slate shadow-soft transition hover:border-cta/70 hover:bg-cta-soft/20 focus:border-cta focus:outline-none focus:ring-2 focus:ring-cta/20 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-sm border border-cta/25 bg-cta-soft text-cta">
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate font-semibold text-ink">{loading ? "Đang cập nhật..." : actions.length ? "Thao tác nhanh" : "Không còn thao tác"}</span>
+            <span className="block truncate text-xs text-slate-muted">{orderStatusLabels[order.orderStatus]} · {paymentStatusLabels[order.paymentStatus]}</span>
+          </span>
+        </span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-muted transition ${open ? "rotate-180 text-cta" : ""}`} />
+      </button>
+      {open ? (
+        <div id={menuId} role="menu" className="absolute right-0 top-full z-50 mt-2 w-[260px] overflow-hidden rounded-sm border border-line bg-pearl p-1 shadow-premium">
+          <div className="border-b border-line px-3 py-2">
+            <p className="text-[11px] font-bold uppercase tracking-[.14em] text-slate-muted">Hiện tại</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <StatusBadge tone={order.orderStatus}>{orderStatusLabels[order.orderStatus]}</StatusBadge>
+              <StatusBadge tone={order.paymentStatus}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge>
+            </div>
+          </div>
+          <div className="grid p-1">
+            {actions.map((action) => (
+              <button
+                key={action.value}
+                type="button"
+                role="menuitem"
+                className="flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm text-slate transition hover:bg-cta-soft/45 hover:text-navy focus:bg-cta-soft/45 focus:text-navy focus:outline-none"
+                onClick={() => {
+                  setOpen(false);
+                  onRunAction(action.value);
+                }}
+              >
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-cta" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">{action.label}</span>
+                  <span className="mt-0.5 block text-xs text-slate-muted">{quickActionHint(action.value)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function quickActionHint(action: OrderWorkflowAction) {
+  const hints: Record<OrderWorkflowAction, string> = {
+    confirm: "Xác nhận đơn và chuyển sang xử lý",
+    mark_paid: "Ghi nhận thanh toán thủ công",
+    pack: "Đánh dấu đã đóng gói",
+    ship: "Bàn giao cho đơn vị vận chuyển",
+    complete: "Hoàn tất đơn hàng",
+    cancel: "Hủy đơn và cập nhật trạng thái",
+  };
+  return hints[action];
 }
 
 function OrderDetail({ order, onUpdated }: { order: Order; onUpdated?: (order: Order) => void }) {

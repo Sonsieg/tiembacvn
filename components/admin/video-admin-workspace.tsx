@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, ExternalLink, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { CheckCircle, ChevronLeft, ChevronRight, ExternalLink, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Product, ProductVideo } from "@/types/commerce";
 import { AdminDrawer, ConfirmDialog } from "@/components/admin/shared/admin-overlays";
@@ -24,12 +24,28 @@ export function VideoAdminWorkspace({ products, videos }: { products: Product[];
   const [statusTarget, setStatusTarget] = useState<ProductVideo | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState("10");
 
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
   const filtered = items.filter((video) => {
     const productTitle = productById.get(video.productId)?.title ?? "";
     return `${productTitle} ${video.youtubeUrl}`.toLowerCase().includes(query.toLowerCase());
   });
+  const perPage = Number(itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const paginatedVideos = filtered.slice((safePage - 1) * perPage, safePage * perPage);
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    setPage(1);
+  }
+
+  function updateItemsPerPage(value: string) {
+    setItemsPerPage(value);
+    setPage(1);
+  }
 
   function openCreate() {
     setFormError("");
@@ -133,7 +149,7 @@ export function VideoAdminWorkspace({ products, videos }: { products: Product[];
         <div className="border-b border-line p-4">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-muted" />
-            <Input className="!pl-12" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo sản phẩm hoặc YouTube URL..." />
+            <Input className="!pl-12" value={query} onChange={(event) => updateQuery(event.target.value)} placeholder="Tìm theo sản phẩm hoặc YouTube URL..." />
           </div>
         </div>
         <table className="w-full min-w-[860px] text-left text-sm">
@@ -146,7 +162,7 @@ export function VideoAdminWorkspace({ products, videos }: { products: Product[];
             </tr>
           </thead>
           <tbody>
-            {filtered.map((video) => {
+            {paginatedVideos.map((video) => {
               const product = productById.get(video.productId);
               return (
                 <tr key={video.id} className="border-t border-silver-200">
@@ -167,6 +183,34 @@ export function VideoAdminWorkspace({ products, videos }: { products: Product[];
           </tbody>
         </table>
         {!filtered.length ? <div className="border-t border-line p-8 text-center text-sm text-slate-muted">Chưa có video phù hợp.</div> : null}
+        {totalPages > 1 || filtered.length > 10 ? (
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line p-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-muted">
+                Hiển thị {(safePage - 1) * perPage + 1} - {Math.min(safePage * perPage, filtered.length)} trên tổng số {filtered.length} video
+              </span>
+              <select
+                className="h-8 rounded-sm border border-silver-200 bg-white px-2 text-sm outline-none hover:border-cta focus:border-cta focus:ring-2 focus:ring-cta/20"
+                value={itemsPerPage}
+                onChange={(event) => updateItemsPerPage(event.target.value)}
+                aria-label="Số lượng video mỗi trang"
+              >
+                <option value="10">10 / trang</option>
+                <option value="20">20 / trang</option>
+                <option value="50">50 / trang</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="secondary" size="sm" disabled={safePage === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+                <ChevronLeft className="h-4 w-4" /> Trước
+              </Button>
+              <span className="text-sm font-medium text-ink">{safePage} / {totalPages}</span>
+              <Button type="button" variant="secondary" size="sm" disabled={safePage === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>
+                Sau <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <AdminDrawer
