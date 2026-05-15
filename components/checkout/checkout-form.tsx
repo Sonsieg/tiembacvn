@@ -161,11 +161,11 @@ export function CheckoutForm() {
           <Panel eyebrow="Bước 1" title="Thông tin liên hệ" description="Thông tin này dùng để xác nhận đơn và hỗ trợ tra cứu sau khi đặt hàng.">
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Họ và tên" required error={form.formState.errors.customer?.fullName?.message}><Input disabled={disabled} autoComplete="name" {...form.register("customer.fullName")} /></Field>
-              <Field label="Số điện thoại" required error={form.formState.errors.customer?.phone?.message} hint="Nhập số di động Việt Nam, ví dụ 0912345678.">
+              <Field label="Số điện thoại" required error={form.formState.errors.customer?.phone?.message} tooltip="Nhập số di động Việt Nam, ví dụ 0912345678.">
                 <Input disabled={disabled} autoComplete="tel" inputMode="tel" maxLength={16} placeholder="0912345678" {...form.register("customer.phone")} />
               </Field>
               <div className="md:col-span-2">
-                <Field label="Email" required error={form.formState.errors.customer?.email?.message} hint="Dùng email chính để nhận xác nhận đơn hàng.">
+                <Field label="Email" required error={form.formState.errors.customer?.email?.message} tooltip="Dùng email chính để nhận xác nhận đơn hàng.">
                   <Input disabled={disabled} type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} placeholder="ten@email.com" {...form.register("customer.email")} />
                 </Field>
               </div>
