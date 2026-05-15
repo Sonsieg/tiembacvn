@@ -315,6 +315,58 @@ begin
 end;
 $$;
 
+create or replace function release_stock_for_order(p_order_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  v_item record;
+begin
+  for v_item in
+    select variant_id, quantity
+    from order_items
+    where order_id = p_order_id
+      and variant_id is not null
+  loop
+    update inventory_items
+    set quantity_reserved = greatest(quantity_reserved - v_item.quantity, 0),
+        updated_at = now()
+    where variant_id = v_item.variant_id;
+
+    insert into inventory_movements(variant_id, type, quantity, note)
+    values (v_item.variant_id, 'release', v_item.quantity, 'Released after order cancellation');
+  end loop;
+end;
+$$;
+
+create or replace function complete_stock_for_order(p_order_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  v_item record;
+begin
+  for v_item in
+    select variant_id, quantity
+    from order_items
+    where order_id = p_order_id
+      and variant_id is not null
+  loop
+    update inventory_items
+    set quantity_available = greatest(quantity_available - v_item.quantity, 0),
+        quantity_reserved = greatest(quantity_reserved - v_item.quantity, 0),
+        quantity_sold = quantity_sold + v_item.quantity,
+        updated_at = now()
+    where variant_id = v_item.variant_id;
+
+    insert into inventory_movements(variant_id, type, quantity, note)
+    values (v_item.variant_id, 'sale', v_item.quantity, 'Sold after order completion');
+  end loop;
+end;
+$$;
+
 create or replace function create_checkout_order_atomic(p_order jsonb)
 returns text
 language plpgsql
@@ -441,6 +493,19 @@ begin
 end;
 $$;
 
+create index idx_products_status_created_at on products(status, created_at desc);
+create index idx_products_slug on products(slug);
+create index idx_product_variants_product_id on product_variants(product_id);
+create index idx_product_images_product_id_sort on product_images(product_id, sort_order);
+create index idx_product_categories_category_id on product_categories(category_id);
+create index idx_product_collections_collection_id on product_collections(collection_id);
+create index idx_product_videos_product_status_sort on product_videos(product_id, status, sort_order);
+create index idx_orders_created_at on orders(created_at desc);
+create index idx_orders_statuses on orders(order_status, payment_status, fulfillment_status);
+create index idx_orders_payment_method on orders(payment_method);
+create index idx_order_items_order_id on order_items(order_id);
+create index idx_order_status_history_order_id_created on order_status_history(order_id, created_at);
+
 alter table products enable row level security;
 alter table product_variants enable row level security;
 alter table product_images enable row level security;
@@ -476,9 +541,17 @@ create policy "Admin full products" on products for all using (auth.role() = 'au
 create policy "Admin full variants" on product_variants for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Admin full images" on product_images for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Admin full categories" on categories for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Admin full product categories" on product_categories for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Admin full collections" on collections for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Admin full product collections" on product_collections for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Admin full inventory" on inventory_items for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Admin full videos" on product_videos for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Admin full reviews" on reviews for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Admin full blog" on blog_posts for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Admin full orders" on orders for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Admin full order items" on order_items for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Admin full order addresses" on order_addresses for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Admin full order history" on order_status_history for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Admin full payments" on payments for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Admin full coupons" on coupons for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Admin full settings" on settings for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');

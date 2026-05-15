@@ -33,6 +33,7 @@ export function CheckoutForm() {
     },
   });
   const paymentMethod = useWatch({ control: form.control, name: "paymentMethod" });
+  const canSubmit = items.length > 0 && !loading;
 
   async function submit(values: CheckoutInput) {
     if (loading) return;
@@ -90,17 +91,17 @@ export function CheckoutForm() {
       <div className="grid gap-5">
         <Panel eyebrow="Bước 1" title="Thông tin liên hệ" description="Thông tin này dùng để xác nhận đơn và hỗ trợ tra cứu sau khi đặt hàng.">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Họ và tên" error={form.formState.errors.customer?.fullName?.message}><Input disabled={disabled} {...form.register("customer.fullName")} /></Field>
-            <Field label="Số điện thoại" error={form.formState.errors.customer?.phone?.message}><Input disabled={disabled} {...form.register("customer.phone")} /></Field>
-            <div className="md:col-span-2"><Field label="Email" error={form.formState.errors.customer?.email?.message}><Input disabled={disabled} type="email" {...form.register("customer.email")} /></Field></div>
+            <Field label="Họ và tên" required error={form.formState.errors.customer?.fullName?.message}><Input disabled={disabled} autoComplete="name" {...form.register("customer.fullName")} /></Field>
+            <Field label="Số điện thoại" required error={form.formState.errors.customer?.phone?.message}><Input disabled={disabled} autoComplete="tel" inputMode="tel" {...form.register("customer.phone")} /></Field>
+            <div className="md:col-span-2"><Field label="Email" required error={form.formState.errors.customer?.email?.message}><Input disabled={disabled} type="email" autoComplete="email" {...form.register("customer.email")} /></Field></div>
           </div>
         </Panel>
         <Panel eyebrow="Bước 2" title="Địa chỉ nhận hàng" description="Vui lòng nhập địa chỉ rõ ràng để shop xác nhận và giao đúng khu vực.">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Địa chỉ" error={form.formState.errors.address?.addressLine?.message}><Input disabled={disabled} {...form.register("address.addressLine")} /></Field>
-            <Field label="Phường/xã" error={form.formState.errors.address?.ward?.message}><Input disabled={disabled} {...form.register("address.ward")} /></Field>
-            <Field label="Quận/huyện" error={form.formState.errors.address?.district?.message}><Input disabled={disabled} {...form.register("address.district")} /></Field>
-            <Field label="Tỉnh/thành phố" error={form.formState.errors.address?.province?.message}><Input disabled={disabled} {...form.register("address.province")} /></Field>
+            <Field label="Địa chỉ" required error={form.formState.errors.address?.addressLine?.message}><Input disabled={disabled} autoComplete="street-address" {...form.register("address.addressLine")} /></Field>
+            <Field label="Phường/xã" required error={form.formState.errors.address?.ward?.message}><Input disabled={disabled} {...form.register("address.ward")} /></Field>
+            <Field label="Quận/huyện" required error={form.formState.errors.address?.district?.message}><Input disabled={disabled} {...form.register("address.district")} /></Field>
+            <Field label="Tỉnh/thành phố" required error={form.formState.errors.address?.province?.message}><Input disabled={disabled} autoComplete="address-level1" {...form.register("address.province")} /></Field>
             <div className="md:col-span-2"><Field label="Ghi chú đơn hàng"><Textarea disabled={disabled} className="min-h-32" {...form.register("address.note")} /></Field></div>
           </div>
         </Panel>
@@ -147,7 +148,7 @@ export function CheckoutForm() {
       </div>
       <div className="grid h-fit gap-4 lg:sticky lg:top-24">
         <CartSummary />
-        <Button type="submit" disabled={loading || !items.length} className="w-full" size="lg"><CreditCard className="h-4 w-4" /> {loading ? "Đang giữ hàng và tạo đơn..." : "Đặt hàng"}</Button>
+        <Button type="submit" disabled={!canSubmit} className="w-full" size="lg"><CreditCard className="h-4 w-4" /> {loading ? "Đang giữ hàng và tạo đơn..." : "Đặt hàng"}</Button>
         {loading ? <p className="text-center text-xs text-slate-muted">Vui lòng không đóng trang trong lúc hệ thống xác nhận tồn kho.</p> : null}
       </div>
     </form>

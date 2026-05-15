@@ -23,6 +23,7 @@ export function VideoAdminWorkspace({ products, videos }: { products: Product[];
   const [editing, setEditing] = useState<VideoForm | null>(null);
   const [statusTarget, setStatusTarget] = useState<ProductVideo | null>(null);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
   const filtered = items.filter((video) => {
@@ -31,16 +32,23 @@ export function VideoAdminWorkspace({ products, videos }: { products: Product[];
   });
 
   function openCreate() {
+    setFormError("");
     setEditing({ productId: products[0]?.id ?? "", youtubeUrl: "", active: true });
   }
 
   function openEdit(video: ProductVideo) {
+    setFormError("");
     setEditing({ id: video.id, productId: video.productId, youtubeUrl: video.youtubeUrl, active: video.status === "active" });
   }
 
   async function saveVideo() {
     if (!editing) return;
+    if (!editing.productId || !editing.youtubeUrl.trim()) {
+      setFormError("Vui lòng chọn sản phẩm và nhập YouTube URL.");
+      return;
+    }
     setSaving(true);
+    setFormError("");
     const product = productById.get(editing.productId);
 
     try {
@@ -167,16 +175,16 @@ export function VideoAdminWorkspace({ products, videos }: { products: Product[];
         description="Chọn sản phẩm, nhập YouTube URL và quyết định có active ở trang sản phẩm hay không."
         onClose={() => setEditing(null)}
         width="max-w-xl"
-        footer={<div className="flex justify-end gap-3"><Button type="button" variant="secondary" onClick={() => setEditing(null)}>Hủy</Button><Button type="button" onClick={saveVideo} disabled={saving}>{saving ? "Đang lưu..." : "Lưu thay đổi"}</Button></div>}
+        footer={<div className="flex justify-end gap-3"><Button type="button" variant="secondary" onClick={() => setEditing(null)}>Hủy</Button><Button type="button" onClick={saveVideo} disabled={saving || !editing?.productId || !editing.youtubeUrl.trim()}>{saving ? "Đang lưu..." : "Lưu thay đổi"}</Button></div>}
       >
         {editing ? (
           <div className="admin-panel grid gap-4">
-            <Field label="Sản phẩm">
+            <Field label="Sản phẩm" required>
               <Select value={editing.productId} onChange={(event) => setEditing((current) => current ? { ...current, productId: event.target.value } : current)}>
                 {products.map((product) => <option key={product.id} value={product.id}>{product.title}</option>)}
               </Select>
             </Field>
-            <Field label="YouTube URL">
+            <Field label="YouTube URL" required error={formError}>
               <Input value={editing.youtubeUrl} onChange={(event) => setEditing((current) => current ? { ...current, youtubeUrl: event.target.value } : current)} placeholder="https://www.youtube.com/watch?v=..." />
             </Field>
             <label className="flex items-center gap-3 text-sm font-semibold text-slate">

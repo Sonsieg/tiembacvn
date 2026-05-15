@@ -62,19 +62,21 @@ export async function getOrderById(id: string) {
 }
 
 export async function trackOrder(orderNumber: string, emailOrPhone: string) {
+  const normalizedOrderNumber = orderNumber.trim().toUpperCase();
   const needle = emailOrPhone.trim().toLowerCase();
+  const needlePhoneVariants = phoneVariants(emailOrPhone);
   const supabase = createSupabaseAdminClient();
   if (supabase) {
-    const order = await fetchOrderByColumn("order_number", orderNumber.trim());
+    const order = await fetchOrderByColumn("order_number", normalizedOrderNumber);
     if (!order) return null;
-    return order.customer.email.toLowerCase() === needle || order.customer.phone.replace(/\s/g, "") === needle.replace(/\s/g, "") ? order : null;
+    return contactMatches(order, needle, needlePhoneVariants) ? order : null;
   }
 
   return (
     runtimeOrders.find(
       (order) =>
-        order.orderNumber.toLowerCase() === orderNumber.trim().toLowerCase() &&
-        (order.customer.email.toLowerCase() === needle || order.customer.phone.replace(/\s/g, "") === needle.replace(/\s/g, "")),
+        order.orderNumber.toLowerCase() === normalizedOrderNumber.toLowerCase() &&
+        contactMatches(order, needle, needlePhoneVariants),
     ) ?? null
   );
 }
@@ -100,6 +102,16 @@ export async function updateOrderStatus(id: string, input: OrderStatusUpdateInpu
 
   const supabase = createSupabaseAdminClient();
   if (supabase) {
+    if (current.orderStatus !== "cancelled" && next.orderStatus === "cancelled") {
+      const { error } = await supabase.rpc("release_stock_for_order", { p_order_id: current.id });
+      if (error) throw new Error(`Không thể hoàn tồn kho: ${error.message}. Hãy chạy lại supabase/schema.sql để cài RPC release_stock_for_order.`);
+    }
+
+    if (current.orderStatus !== "completed" && next.orderStatus === "completed") {
+      const { error } = await supabase.rpc("complete_stock_for_order", { p_order_id: current.id });
+      if (error) throw new Error(`Không thể chốt tồn kho: ${error.message}. Hãy chạy lại supabase/schema.sql để cài RPC complete_stock_for_order.`);
+    }
+
     const patch = {
       order_status: next.orderStatus,
       payment_status: next.paymentStatus,
@@ -235,6 +247,25 @@ function asDbRow(value: unknown): DbRow | null {
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function contactMatches(order: Order, needle: string, needlePhoneVariants: Set<string>) {
+  if (order.customer.email.trim().toLowerCase() === needle) return true;
+  const orderPhoneVariants = phoneVariants(order.customer.phone);
+  for (const variant of needlePhoneVariants) {
+    if (orderPhoneVariants.has(variant)) return true;
+  }
+  return false;
+}
+
+function phoneVariants(value: string) {
+  const digits = value.replace(/\D/g, "");
+  const variants = new Set<string>();
+  if (!digits) return variants;
+  variants.add(digits);
+  if (digits.startsWith("84")) variants.add(`0${digits.slice(2)}`);
+  if (digits.startsWith("0")) variants.add(`84${digits.slice(1)}`);
+  return variants;
 }
 
 function statusTimelineLabel(input: OrderStatusUpdateInput) {

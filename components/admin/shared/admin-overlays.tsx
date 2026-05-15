@@ -49,17 +49,19 @@ export function AdminModal({
   title,
   children,
   onClose,
+  width = "max-w-xl",
 }: {
   open: boolean;
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  width?: string;
 }) {
   return (
     <AnimatePresence>
       {open ? (
         <motion.div className="fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <motion.div className="w-full max-w-xl rounded-sm border border-line bg-modal text-slate shadow-premium" initial={{ y: 20, scale: 0.98 }} animate={{ y: 0, scale: 1 }} exit={{ y: 20, scale: 0.98 }}>
+          <motion.div className={`w-full ${width} rounded-sm border border-line bg-modal text-slate shadow-premium`} initial={{ y: 20, scale: 0.98 }} animate={{ y: 0, scale: 1 }} exit={{ y: 20, scale: 0.98 }}>
             <header className="flex items-center justify-between border-b border-line p-5">
               <h2 className="font-display text-3xl font-semibold text-slate">{title}</h2>
               <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-sm border border-line bg-pearl text-slate hover:border-cta hover:text-navy" aria-label="Đóng"><X className="h-5 w-5" /></button>

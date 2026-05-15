@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JournalSearchForm } from "@/components/blog/journal-search-form";
 import { getBlogPosts } from "@/lib/services/blog.service";
 import { formatDate } from "@/lib/utils/format";
 
@@ -9,14 +10,6 @@ export const metadata: Metadata = {
 };
 
 type Props = { searchParams?: Promise<{ q?: string; topic?: string; page?: string }> };
-
-const topicOptions = [
-  ["all", "Tất cả"],
-  ["size", "Chọn size"],
-  ["care", "Bảo quản"],
-  ["material", "Chất liệu"],
-  ["gift", "Quà tặng"],
-];
 
 function topicOf(post: { title: string; slug: string; excerpt: string }) {
   const text = `${post.title} ${post.slug} ${post.excerpt}`.toLowerCase();
@@ -56,13 +49,7 @@ export default async function JournalPage({ searchParams }: Props) {
     <section className="section">
       <div className="container-page grid gap-8">
         <div><p className="eyebrow">Journal</p><h1 className="heading-lg">Cẩm nang trang sức bạc</h1></div>
-        <form className="grid gap-3 rounded-sm border border-line bg-white p-4 shadow-soft md:grid-cols-[1fr_220px_auto]">
-          <input className="h-11 rounded-sm border border-input-border px-4 text-sm outline-none focus:border-cta focus:ring-2 focus:ring-cta/20" name="q" defaultValue={query} placeholder="Tìm bài viết..." />
-          <select className="h-11 rounded-sm border border-input-border px-4 text-sm outline-none focus:border-cta focus:ring-2 focus:ring-cta/20" name="topic" defaultValue={topic}>
-            {topicOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select>
-          <button className="inline-flex h-11 items-center justify-center rounded-sm border border-cta bg-cta px-5 text-sm font-bold uppercase tracking-[.12em] text-cta-text" type="submit">Tìm kiếm</button>
-        </form>
+        <JournalSearchForm query={query} topic={topic} />
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {visiblePosts.map((post) => (
             <Link key={post.id} href={`/journal/${post.slug}`} className="overflow-hidden rounded-[1.5rem] bg-white shadow-soft">
@@ -72,17 +59,28 @@ export default async function JournalPage({ searchParams }: Props) {
           ))}
         </div>
         {!visiblePosts.length ? <div className="rounded-sm border border-line bg-white p-8 text-center text-sm text-gray-500 shadow-soft">Không có bài viết phù hợp.</div> : null}
-        {filtered.length > pageSize ? (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-gray-500">Hiển thị {(safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)} / {filtered.length} bài viết</p>
-            <div className="flex items-center gap-2">
-              <Link className="rounded-sm border border-line bg-white px-4 py-2 text-sm font-bold text-ink shadow-soft aria-disabled:pointer-events-none aria-disabled:opacity-50" aria-disabled={safePage === 1} href={journalHref({ q: query, topic, page: Math.max(1, safePage - 1) })}>Trước</Link>
-              <span className="text-sm font-semibold text-ink">{safePage} / {totalPages}</span>
-              <Link className="rounded-sm border border-line bg-white px-4 py-2 text-sm font-bold text-ink shadow-soft aria-disabled:pointer-events-none aria-disabled:opacity-50" aria-disabled={safePage === totalPages} href={journalHref({ q: query, topic, page: Math.min(totalPages, safePage + 1) })}>Sau</Link>
-            </div>
-          </div>
-        ) : null}
+        <JournalPagination query={query} topic={topic} page={safePage} totalPages={totalPages} totalItems={filtered.length} pageSize={pageSize} />
       </div>
     </section>
+  );
+}
+
+function JournalPagination({ query, topic, page, totalPages, totalItems, pageSize }: { query: string; topic: string; page: number; totalPages: number; totalItems: number; pageSize: number }) {
+  const start = totalItems ? (page - 1) * pageSize + 1 : 0;
+  const end = Math.min(page * pageSize, totalItems);
+
+  return (
+    <div className="mt-8 grid gap-4 border-t border-line pt-8">
+      <p className="text-center text-xs font-bold uppercase tracking-[.16em] text-slate-muted">Hiển thị {start} - {end} / {totalItems} bài viết</p>
+      <nav className="flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-[.18em] text-slate-muted" aria-label="Phân trang bài viết">
+        <Link className="hover:text-cta aria-disabled:pointer-events-none aria-disabled:opacity-40" aria-disabled={page === 1} href={journalHref({ q: query, topic, page: Math.max(1, page - 1) })}>Trước</Link>
+        {Array.from({ length: totalPages }, (_, index) => index + 1).map((item) => (
+          <Link key={item} href={journalHref({ q: query, topic, page: item })} className={item === page ? "text-cta" : "hover:text-slate"}>
+            {String(item).padStart(2, "0")}
+          </Link>
+        ))}
+        <Link className="hover:text-cta aria-disabled:pointer-events-none aria-disabled:opacity-40" aria-disabled={page === totalPages} href={journalHref({ q: query, topic, page: Math.min(totalPages, page + 1) })}>Tiếp</Link>
+      </nav>
+    </div>
   );
 }
