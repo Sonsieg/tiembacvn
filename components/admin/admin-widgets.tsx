@@ -13,7 +13,8 @@ import { AdminDrawer } from "@/components/admin/shared/admin-overlays";
 import { OrderStatusEditor } from "@/components/admin/order-status-editor";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
-import type { Order, OrderStatus, Product } from "@/types/commerce";
+import { fulfillmentStatusLabels, getOrderWorkflowActions, orderStatusLabels, paymentMethodLabels, paymentStatusLabels, type OrderWorkflowAction } from "@/lib/utils/order-workflow";
+import type { Order, Product } from "@/types/commerce";
 
 export function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return <Card className="p-5"><p className="text-sm text-gray-500">{label}</p><b className="mt-2 block text-2xl text-ink">{value}</b><span className="text-xs text-claret">{hint}</span></Card>;
@@ -22,11 +23,13 @@ export function StatCard({ label, value, hint }: { label: string; value: string;
 export function OrdersTable({ orders }: { orders: Order[] }) {
   const toast = useToast();
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
-  const [statusOverrides, setStatusOverrides] = useState<Record<string, OrderStatus>>({});
+  const [orderOverrides, setOrderOverrides] = useState<Record<string, Order>>({});
   const [updatingOrderIds, setUpdatingOrderIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [payment, setPayment] = useState("all");
+  const [fulfillment, setFulfillment] = useState("all");
+  const [method, setMethod] = useState("all");
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState("10");
 
@@ -44,25 +47,35 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     resetPage();
   }
 
+  function updateFulfillment(nextFulfillment: string) {
+    setFulfillment(nextFulfillment);
+    resetPage();
+  }
+
+  function updateMethod(nextMethod: string) {
+    setMethod(nextMethod);
+    resetPage();
+  }
+
   function updateItemsPerPage(nextItemsPerPage: string) {
     setItemsPerPage(nextItemsPerPage);
     resetPage();
   }
 
-  const displayedOrders = orders.map((order) => statusOverrides[order.id] ? { ...order, orderStatus: statusOverrides[order.id] } : order);
+  const displayedOrders = orders.map((order) => orderOverrides[order.id] ?? order);
 
-  async function updateOrderStatus(order: Order, nextStatus: OrderStatus) {
+  async function runOrderAction(order: Order, action: OrderWorkflowAction) {
     setUpdatingOrderIds((current) => [...current, order.id]);
     try {
       const response = await fetch(`/api/admin/orders/${order.id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderStatus: nextStatus }),
+        body: JSON.stringify({ action }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error ?? "Không thể cập nhật đơn hàng");
-      setStatusOverrides((current) => ({ ...current, [order.id]: nextStatus }));
-      toast({ tone: "success", title: "Đã cập nhật đơn hàng", description: `${order.orderNumber} chuyển sang ${nextStatus}.` });
+      setOrderOverrides((current) => ({ ...current, [order.id]: data.order }));
+      toast({ tone: "success", title: "Đã cập nhật đơn hàng", description: `${order.orderNumber} đã được chuyển trạng thái.` });
     } catch (error) {
       toast({ tone: "danger", title: "Cập nhật đơn thất bại", description: error instanceof Error ? error.message : "Không thể cập nhật đơn hàng" });
     } finally {
@@ -74,7 +87,9 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     const haystack = `${order.orderNumber} ${order.customer.fullName} ${order.customer.phone}`.toLowerCase();
     return (!query || haystack.includes(query.toLowerCase()))
       && (status === "all" || order.orderStatus === status)
-      && (payment === "all" || order.paymentStatus === payment);
+      && (payment === "all" || order.paymentStatus === payment)
+      && (fulfillment === "all" || order.fulfillmentStatus === fulfillment)
+      && (method === "all" || order.paymentMethod === method);
   });
 
   const perPage = Number(itemsPerPage);
@@ -84,47 +99,45 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
   return (
     <>
       <div className="grid gap-4">
-        <div className="grid gap-3 border-b border-line p-4 lg:grid-cols-[1fr_190px_190px]">
+        <div className="grid gap-3 border-b border-line p-4 lg:grid-cols-[1fr_190px_190px_190px_170px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-muted" />
             <Input className="!pl-12" value={query} onChange={(event) => { setQuery(event.target.value); resetPage(); }} placeholder="Tìm mã đơn, khách hàng, số điện thoại..." />
           </div>
           <AdminDropdown ariaLabel="Lọc trạng thái đơn" value={status} onChange={updateStatus} options={[
             { value: "all", label: "Tất cả trạng thái" },
-            { value: "pending", label: "Chờ xác nhận" },
-            { value: "confirmed", label: "Đã xác nhận" },
-            { value: "processing", label: "Đang xử lý" },
-            { value: "shipped", label: "Đã gửi hàng" },
-            { value: "completed", label: "Hoàn tất" },
-            { value: "cancelled", label: "Đã hủy" },
+            ...Object.entries(orderStatusLabels).map(([value, label]) => ({ value, label })),
           ]} />
           <AdminDropdown ariaLabel="Lọc thanh toán" value={payment} onChange={updatePayment} options={[
             { value: "all", label: "Tất cả thanh toán" },
-            { value: "pending", label: "Chờ thanh toán" },
-            { value: "paid", label: "Đã thanh toán" },
-            { value: "failed", label: "Thất bại" },
-            { value: "refunded", label: "Đã hoàn tiền" },
+            ...Object.entries(paymentStatusLabels).map(([value, label]) => ({ value, label })),
+          ]} />
+          <AdminDropdown ariaLabel="Lọc giao hàng" value={fulfillment} onChange={updateFulfillment} options={[
+            { value: "all", label: "Tất cả giao hàng" },
+            ...Object.entries(fulfillmentStatusLabels).map(([value, label]) => ({ value, label })),
+          ]} />
+          <AdminDropdown ariaLabel="Lọc phương thức" value={method} onChange={updateMethod} options={[
+            { value: "all", label: "Tất cả phương thức" },
+            ...Object.entries(paymentMethodLabels).map(([value, label]) => ({ value, label })),
           ]} />
         </div>
         <div className="overflow-x-auto px-4 pb-4">
           <table className="w-full min-w-[860px] text-left text-sm">
-            <thead className="text-slate-muted"><tr><th className="p-3">Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thanh toán</th><th>Cập nhật nhanh</th><th>Ngày tạo</th></tr></thead>
+            <thead className="text-slate-muted"><tr><th className="p-3">Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Phương thức</th><th>Trạng thái</th><th>Thanh toán</th><th>Giao hàng</th><th>Cập nhật nhanh</th><th>Ngày tạo</th></tr></thead>
             <tbody>
               {paginatedOrders.map((order) => (
                 <tr key={order.id} className="border-t border-line hover:bg-ivory-soft/70">
                   <td className="p-3"><button className="font-semibold text-navy hover:text-cta" onClick={() => setActiveOrder(order)}>{order.orderNumber}</button></td>
                   <td>{order.customer.fullName}<br /><span className="text-slate-muted">{order.customer.phone}</span></td>
                   <td className="font-semibold">{formatCurrency(order.grandTotal)}</td>
-                  <td><StatusBadge tone={order.orderStatus}>{order.orderStatus}</StatusBadge></td>
-                  <td><StatusBadge tone={order.paymentStatus}>{order.paymentStatus}</StatusBadge></td>
+                  <td><StatusBadge tone={order.paymentMethod}>{paymentMethodLabels[order.paymentMethod]}</StatusBadge></td>
+                  <td><StatusBadge tone={order.orderStatus}>{orderStatusLabels[order.orderStatus]}</StatusBadge></td>
+                  <td><StatusBadge tone={order.paymentStatus}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge></td>
+                  <td><StatusBadge tone={order.fulfillmentStatus}>{fulfillmentStatusLabels[order.fulfillmentStatus]}</StatusBadge></td>
                   <td>
-                    <Select className="min-w-[170px]" aria-label="Chuyển trạng thái đơn" value={order.orderStatus} disabled={updatingOrderIds.includes(order.id)} onChange={(event) => updateOrderStatus(order, event.target.value as OrderStatus)}>
-                      <option value="pending">Chờ xác nhận</option>
-                      <option value="confirmed">Đã xác nhận</option>
-                      <option value="processing">Đang xử lý</option>
-                      <option value="shipped">Đã gửi hàng</option>
-                      <option value="completed">Hoàn tất</option>
-                      <option value="cancelled">Đã hủy</option>
+                    <Select className="min-w-[190px]" aria-label="Cập nhật nhanh đơn" value="" disabled={updatingOrderIds.includes(order.id)} onChange={(event) => event.target.value && runOrderAction(order, event.target.value as OrderWorkflowAction)}>
+                      <option value="">Chọn thao tác</option>
+                      {getOrderWorkflowActions(order).map((action) => <option key={action.value} value={action.value}>{action.label}</option>)}
                     </Select>
                   </td>
                   <td>{formatDate(order.createdAt)}</td>
@@ -166,18 +179,18 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
         ) : null}
       </div>
       <AdminDrawer open={Boolean(activeOrder)} title="Chi tiết đơn hàng" description="Xem nhanh và cập nhật đơn mà không rời khỏi danh sách." onClose={() => setActiveOrder(null)} width="max-w-3xl" footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setActiveOrder(null)}>Đóng</Button></div>}>
-        {activeOrder ? <OrderDetail order={activeOrder} onUpdated={(order) => { setActiveOrder(order); setStatusOverrides((current) => ({ ...current, [order.id]: order.orderStatus })); }} /> : null}
+        {activeOrder ? <OrderDetail order={activeOrder} onUpdated={(order) => { setActiveOrder(order); setOrderOverrides((current) => ({ ...current, [order.id]: order })); }} /> : null}
       </AdminDrawer>
     </>
   );
 }
 
 function StatusBadge({ children, tone }: { children: ReactNode; tone: string }) {
-  const className = tone === "cancelled" || tone === "failed"
+  const className = tone === "cancelled" || tone === "failed" || tone === "returned" || tone === "refunded"
     ? "border-danger/25 bg-danger/10 text-danger"
     : tone === "pending"
       ? "border-warning/25 bg-warning/10 text-warning"
-      : tone === "paid" || tone === "completed"
+      : tone === "paid" || tone === "completed" || tone === "delivered"
         ? "border-success/25 bg-success/10 text-success"
         : "border-cta/25 bg-cta-soft text-navy";
   return <Badge className={className}>{children}</Badge>;
@@ -189,7 +202,12 @@ function OrderDetail({ order, onUpdated }: { order: Order; onUpdated?: (order: O
       <section className="admin-panel">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h3 className="font-semibold text-ink">{order.orderNumber}</h3><p className="text-sm text-slate-muted">{formatDate(order.createdAt)}</p></div>
-          <div className="flex flex-wrap gap-2"><StatusBadge tone={order.orderStatus}>{order.orderStatus}</StatusBadge><StatusBadge tone={order.paymentStatus}>{order.paymentStatus}</StatusBadge><StatusBadge tone={order.fulfillmentStatus}>{order.fulfillmentStatus}</StatusBadge></div>
+          <div className="flex flex-wrap gap-2">
+            <StatusBadge tone={order.paymentMethod}>{paymentMethodLabels[order.paymentMethod]}</StatusBadge>
+            <StatusBadge tone={order.orderStatus}>{orderStatusLabels[order.orderStatus]}</StatusBadge>
+            <StatusBadge tone={order.paymentStatus}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge>
+            <StatusBadge tone={order.fulfillmentStatus}>{fulfillmentStatusLabels[order.fulfillmentStatus]}</StatusBadge>
+          </div>
         </div>
       </section>
       <OrderStatusEditor order={order} onUpdated={onUpdated} />

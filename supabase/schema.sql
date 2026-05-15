@@ -428,7 +428,11 @@ begin
   insert into payments(order_id, provider, amount, status)
   values (
     v_order_id,
-    case when p_order->>'paymentMethod' = 'cod' then 'cod' else 'manual' end,
+    case
+      when p_order->>'paymentMethod' = 'cod' then 'cod'
+      when p_order->>'paymentMethod' = 'online' then 'vnpay'
+      else 'manual'
+    end,
     (p_order->>'grandTotal')::int,
     p_order->>'paymentStatus'
   );

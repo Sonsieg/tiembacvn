@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { OrderStatusEditor } from "@/components/admin/order-status-editor";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { getOrderById } from "@/lib/services/order.service";
+import { fulfillmentStatusLabels, orderStatusLabels, paymentMethodLabels, paymentStatusLabels } from "@/lib/utils/order-workflow";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const order = await getOrderById((await params).id);
@@ -27,9 +28,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 {order.address.note ? <p className="mt-2 rounded-sm border border-warning/25 bg-warning/10 p-3 text-sm text-warning">{order.address.note}</p> : null}
               </div>
               <div className="flex flex-wrap gap-2">
-                <Badge>{order.orderStatus}</Badge>
-                <Badge>{order.paymentStatus}</Badge>
-                <Badge>{order.fulfillmentStatus}</Badge>
+                <Badge>{paymentMethodLabels[order.paymentMethod]}</Badge>
+                <Badge>{orderStatusLabels[order.orderStatus]}</Badge>
+                <Badge>{paymentStatusLabels[order.paymentStatus]}</Badge>
+                <Badge>{fulfillmentStatusLabels[order.fulfillmentStatus]}</Badge>
               </div>
             </div>
           </section>

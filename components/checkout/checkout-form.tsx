@@ -59,6 +59,10 @@ export function CheckoutForm() {
       }
       toast({ tone: "success", title: "Đã tạo đơn hàng", description: `Mã đơn ${data.order.orderNumber}.` });
       clearCart();
+      if (data.paymentUrl) {
+        window.location.assign(data.paymentUrl);
+        return;
+      }
       router.push(`/order-success?order=${data.order.orderNumber}`);
     } catch {
       const message = "Kết nối không ổn định. Đơn hàng chưa được xác nhận trên trình duyệt này, vui lòng thử lại.";

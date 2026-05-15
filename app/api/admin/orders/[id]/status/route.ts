@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { updateOrderStatus } from "@/lib/services/order.service";
+import { getOrderById, updateOrderStatus } from "@/lib/services/order.service";
+import { applyOrderWorkflowAction, normalizeOrderStatusInput, type OrderWorkflowAction } from "@/lib/utils/order-workflow";
 import type { OrderStatusUpdateInput } from "@/types/commerce";
 
 const orderStatuses = new Set(["pending", "confirmed", "processing", "shipped", "completed", "cancelled"]);
 const paymentStatuses = new Set(["pending", "paid", "failed", "refunded"]);
 const fulfillmentStatuses = new Set(["unfulfilled", "packed", "shipped", "delivered", "returned"]);
+const workflowActions = new Set(["confirm", "mark_paid", "pack", "ship", "complete", "cancel"]);
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -17,6 +19,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     const body = await request.json();
     const input: OrderStatusUpdateInput = {};
+    const currentOrder = await getOrderById(id);
+    if (!currentOrder) return NextResponse.json({ error: "Không tìm thấy đơn hàng" }, { status: 404 });
+
+    if (body.action) {
+      if (!workflowActions.has(body.action)) return NextResponse.json({ error: "Thao tác đơn hàng không hợp lệ" }, { status: 400 });
+      const next = normalizeOrderStatusInput(currentOrder, applyOrderWorkflowAction(currentOrder, String(body.action) as OrderWorkflowAction));
+      const order = await updateOrderStatus(id, next);
+      return NextResponse.json({ order });
+    }
 
     if (body.orderStatus) {
       if (!orderStatuses.has(body.orderStatus)) return NextResponse.json({ error: "Trạng thái đơn không hợp lệ" }, { status: 400 });
@@ -35,7 +46,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (body.note) input.note = String(body.note);
 
-    const order = await updateOrderStatus(id, input);
+    const order = await updateOrderStatus(id, normalizeOrderStatusInput(currentOrder, input));
     if (!order) return NextResponse.json({ error: "Không tìm thấy đơn hàng" }, { status: 404 });
     return NextResponse.json({ order });
   } catch (error) {

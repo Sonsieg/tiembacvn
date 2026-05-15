@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Select, Textarea } from "@/components/ui/form";
 import { useToast } from "@/components/ui/toast";
 import type { FulfillmentStatus, Order, OrderStatus, PaymentStatus } from "@/types/commerce";
+import { fulfillmentStatusLabels, getOrderWorkflowActions, orderStatusLabels, paymentMethodLabels, paymentStatusLabels, type OrderWorkflowAction } from "@/lib/utils/order-workflow";
 
 export function OrderStatusEditor({ order, onUpdated }: { order: Order; onUpdated?: (order: Order) => void }) {
   const router = useRouter();
@@ -17,14 +18,15 @@ export function OrderStatusEditor({ order, onUpdated }: { order: Order; onUpdate
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const workflowActions = getOrderWorkflowActions(order);
 
-  async function submit() {
+  async function save(payload: { action?: OrderWorkflowAction; orderStatus?: OrderStatus; paymentStatus?: PaymentStatus; fulfillmentStatus?: FulfillmentStatus; note?: string }) {
     setSaving(true);
     setMessage("");
     const response = await fetch(`/api/admin/orders/${order.id}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderStatus, paymentStatus, fulfillmentStatus, note }),
+      body: JSON.stringify(payload),
     });
     const data = await response.json().catch(() => ({}));
     setSaving(false);
@@ -37,44 +39,54 @@ export function OrderStatusEditor({ order, onUpdated }: { order: Order; onUpdate
     }
 
     setNote("");
+    if (data.order) {
+      setOrderStatus(data.order.orderStatus);
+      setPaymentStatus(data.order.paymentStatus);
+      setFulfillmentStatus(data.order.fulfillmentStatus);
+    }
     setMessage("Đã cập nhật trạng thái đơn hàng.");
     toast({ tone: "success", title: "Đã cập nhật trạng thái", description: `${order.orderNumber} đã được ghi vào timeline.` });
     onUpdated?.(data.order);
     router.refresh();
   }
 
+  async function submit() {
+    await save({ orderStatus, paymentStatus, fulfillmentStatus, note });
+  }
+
+  async function runAction(action: OrderWorkflowAction) {
+    await save({ action, note });
+  }
+
   return (
     <section className="admin-panel grid gap-4">
       <div>
         <h3 className="font-semibold text-ink">Cập nhật vận hành</h3>
-        <p className="mt-1 text-sm text-slate-muted">Đổi trạng thái đơn, thanh toán, giao hàng và ghi chú nội bộ vào timeline.</p>
+        <p className="mt-1 text-sm text-slate-muted">{paymentMethodLabels[order.paymentMethod]} · {orderStatusLabels[order.orderStatus]} · {paymentStatusLabels[order.paymentStatus]} · {fulfillmentStatusLabels[order.fulfillmentStatus]}</p>
       </div>
+      {workflowActions.length ? (
+        <div className="flex flex-wrap gap-2">
+          {workflowActions.map((action) => (
+            <Button key={action.value} type="button" variant={action.value === "cancel" ? "secondary" : "primary"} size="sm" onClick={() => runAction(action.value)} disabled={saving}>
+              {action.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-3">
         <Field label="Trạng thái đơn">
           <Select value={orderStatus} onChange={(event) => setOrderStatus(event.target.value as OrderStatus)}>
-            <option value="pending">Chờ xác nhận</option>
-            <option value="confirmed">Đã xác nhận</option>
-            <option value="processing">Đang xử lý</option>
-            <option value="shipped">Đã gửi hàng</option>
-            <option value="completed">Hoàn tất</option>
-            <option value="cancelled">Đã hủy</option>
+            {Object.entries(orderStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </Select>
         </Field>
         <Field label="Thanh toán">
           <Select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value as PaymentStatus)}>
-            <option value="pending">Chờ thanh toán</option>
-            <option value="paid">Đã thanh toán</option>
-            <option value="failed">Thất bại</option>
-            <option value="refunded">Đã hoàn tiền</option>
+            {Object.entries(paymentStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </Select>
         </Field>
         <Field label="Giao hàng">
           <Select value={fulfillmentStatus} onChange={(event) => setFulfillmentStatus(event.target.value as FulfillmentStatus)}>
-            <option value="unfulfilled">Chưa xử lý</option>
-            <option value="packed">Đã đóng gói</option>
-            <option value="shipped">Đã gửi</option>
-            <option value="delivered">Đã giao</option>
-            <option value="returned">Hoàn hàng</option>
+            {Object.entries(fulfillmentStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </Select>
         </Field>
       </div>
