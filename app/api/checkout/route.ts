@@ -2,11 +2,20 @@ import { NextResponse } from "next/server";
 import { createOrder } from "@/lib/services/order.service";
 import { createVnpayPaymentUrl, hasVnpayConfig } from "@/lib/services/vnpay.service";
 import { checkoutSchema } from "@/lib/validations/checkout";
+import { checkCheckoutRateLimit } from "@/lib/utils/rate-limit";
 
 export async function POST(request: Request) {
   try {
     const json = await request.json();
     const input = checkoutSchema.parse(json);
+    const rateLimit = checkCheckoutRateLimit(getClientIp(request), input.customer.phone, input.customer.email);
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { error: `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${Math.ceil(rateLimit.retryAfterSeconds / 60)} phút.` },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } },
+      );
+    }
+
     if (input.paymentMethod === "online" && !hasVnpayConfig()) {
       return NextResponse.json({ error: "Thiếu cấu hình VNPay: VNPAY_TMN_CODE hoặc VNPAY_HASH_SECRET" }, { status: 400 });
     }

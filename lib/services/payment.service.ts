@@ -1,7 +1,7 @@
 import { updateOrderStatus } from "@/lib/services/order.service";
 import { getOrderById } from "@/lib/services/order.service";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { verifyVnpayParams, type VnpayVerification } from "@/lib/services/vnpay.service";
+import { amountsMatch, isSuccessfulVnpayTransaction, verifyVnpayParams, type VnpayVerification } from "@/lib/services/vnpay.service";
 
 export async function updatePaymentFromWebhook(orderNumber: string, status: "paid" | "failed" | "refunded") {
   // Production path: verify provider signature first, then update payments/orders.
@@ -16,21 +16,37 @@ export async function updatePaymentFromWebhook(orderNumber: string, status: "pai
 
 export async function updatePaymentFromVnpay(params: URLSearchParams, source: "return" | "ipn") {
   const verification = verifyVnpayParams(params);
+  logVnpayEvent("received", source, verification);
+
   if (!verification.valid) {
+    logVnpayEvent("invalid-checksum", source, verification);
     return { ok: false, orderNumber: verification.orderNumber, status: "failed" as const, rspCode: "97", message: "Sai checksum" };
   }
 
   const order = await getOrderById(verification.orderNumber);
   if (!order) {
+    logVnpayEvent("missing-order", source, verification);
     return { ok: false, orderNumber: verification.orderNumber, status: "failed" as const, rspCode: "01", message: "Không tìm thấy đơn hàng" };
   }
 
-  if (order.grandTotal !== verification.amount) {
+  if (!amountsMatch(order.grandTotal, verification.amount)) {
+    logVnpayEvent("invalid-amount", source, verification);
     return { ok: false, orderNumber: order.orderNumber, status: "failed" as const, rspCode: "04", message: "Số tiền không hợp lệ" };
   }
 
-  const paid = verification.responseCode === "00" && verification.transactionStatus === "00";
+  const paid = isSuccessfulVnpayTransaction(verification);
   const paymentStatus = paid ? "paid" : "failed";
+
+  if (order.paymentStatus === "paid") {
+    await persistVnpayPayment(order.id, verification, "paid");
+    return {
+      ok: true,
+      orderNumber: order.orderNumber,
+      status: "paid" as const,
+      rspCode: source === "ipn" ? "02" : "00",
+      message: source === "ipn" ? "Order already confirmed" : "Confirm Success",
+    };
+  }
 
   if (order.paymentStatus !== paymentStatus) {
     await updateOrderStatus(order.orderNumber, {
@@ -74,4 +90,16 @@ async function persistVnpayPayment(orderId: string, verification: VnpayVerificat
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+function logVnpayEvent(event: string, source: "return" | "ipn", verification: Pick<VnpayVerification, "orderNumber" | "amount" | "responseCode" | "transactionStatus" | "transactionNo">) {
+  console.info("[vnpay]", {
+    event,
+    source,
+    orderNumber: verification.orderNumber,
+    amount: verification.amount,
+    responseCode: verification.responseCode,
+    transactionStatus: verification.transactionStatus,
+    transactionNo: verification.transactionNo,
+  });
 }

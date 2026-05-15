@@ -181,3 +181,17 @@ a {
     transform: translateY(0);
   }
 }
+
+@keyframes vnpay-progress {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  55% {
+    transform: translateX(70%);
+  }
+
+  100% {
+    transform: translateX(210%);
+  }
+}

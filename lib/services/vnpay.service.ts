@@ -2,6 +2,12 @@ import crypto from "node:crypto";
 import type { Order } from "@/types/commerce";
 
 const defaultPaymentUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+const vnpayVersion = "2.1.0";
+const vnpayCommand = "pay";
+const defaultLocale = "vn";
+const defaultCurrency = "VND";
+const defaultOrderType = "other";
+const paymentTimeoutMinutes = 15;
 
 type VnpayConfig = {
   tmnCode: string;
@@ -20,28 +26,35 @@ export type VnpayVerification = {
   raw: Record<string, string>;
 };
 
+export type VnpayCreatePaymentInput = {
+  order: Order;
+  origin: string;
+  ipAddress: string;
+};
+
 export function hasVnpayConfig() {
   return Boolean(process.env.VNPAY_TMN_CODE && process.env.VNPAY_HASH_SECRET);
 }
 
-export function createVnpayPaymentUrl({ order, origin, ipAddress }: { order: Order; origin: string; ipAddress: string }) {
+export function createVnpayPaymentUrl({ order, origin, ipAddress }: VnpayCreatePaymentInput) {
   const config = getVnpayConfig();
   const now = new Date();
-  const returnUrl = process.env.VNPAY_RETURN_URL ?? `${origin}/api/payment/vnpay/return`;
+  const returnUrl = resolveReturnUrl(origin);
+  const amount = normalizeVnpayAmount(order.grandTotal);
   const params: Record<string, string> = {
-    vnp_Version: "2.1.0",
-    vnp_Command: "pay",
+    vnp_Version: vnpayVersion,
+    vnp_Command: vnpayCommand,
     vnp_TmnCode: config.tmnCode,
-    vnp_Amount: String(order.grandTotal * 100),
-    vnp_CurrCode: "VND",
+    vnp_Amount: String(amount),
+    vnp_CurrCode: defaultCurrency,
     vnp_TxnRef: order.orderNumber,
     vnp_OrderInfo: `Thanh toan don hang ${order.orderNumber}`,
-    vnp_OrderType: "other",
-    vnp_Locale: "vn",
+    vnp_OrderType: defaultOrderType,
+    vnp_Locale: defaultLocale,
     vnp_ReturnUrl: returnUrl,
-    vnp_IpAddr: ipAddress,
+    vnp_IpAddr: normalizeIpAddress(ipAddress),
     vnp_CreateDate: formatVnpayDate(now),
-    vnp_ExpireDate: formatVnpayDate(new Date(now.getTime() + 15 * 60 * 1000)),
+    vnp_ExpireDate: formatVnpayDate(new Date(now.getTime() + paymentTimeoutMinutes * 60 * 1000)),
   };
 
   const secureHash = signParams(params, config.hashSecret);
@@ -72,6 +85,19 @@ export function verifyVnpayParams(params: URLSearchParams): VnpayVerification {
   };
 }
 
+export function isSuccessfulVnpayTransaction(verification: Pick<VnpayVerification, "responseCode" | "transactionStatus">) {
+  return verification.responseCode === "00" && verification.transactionStatus === "00";
+}
+
+export function normalizeVnpayAmount(amount: number) {
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Số tiền VNPay không hợp lệ");
+  return Math.round(amount) * 100;
+}
+
+export function amountsMatch(orderAmount: number, vnpayAmount: number) {
+  return normalizeVnpayAmount(orderAmount) === normalizeVnpayAmount(vnpayAmount);
+}
+
 function getVnpayConfig(): VnpayConfig {
   const tmnCode = process.env.VNPAY_TMN_CODE;
   const hashSecret = process.env.VNPAY_HASH_SECRET;
@@ -90,14 +116,17 @@ function signParams(params: Record<string, string>, secret: string) {
 }
 
 function buildQueryString(params: Record<string, string>) {
-  const sorted = Object.keys(params)
+  return Object.keys(params)
     .filter((key) => params[key] !== "")
     .sort()
-    .reduce<Record<string, string>>((acc, key) => {
-      acc[key] = params[key];
-      return acc;
-    }, {});
-  return new URLSearchParams(sorted).toString();
+    .map((key) => `${vnpayEncode(key)}=${vnpayEncode(params[key])}`)
+    .join("&");
+}
+
+function vnpayEncode(value: string) {
+  // VNPay 2.1.0 hashes the sorted query string with URL-encoded keys and values.
+  // Their samples use application/x-www-form-urlencoded semantics, where spaces are "+".
+  return encodeURIComponent(value).replace(/%20/g, "+");
 }
 
 function safeEqualHash(left: string, right: string) {
@@ -106,6 +135,7 @@ function safeEqualHash(left: string, right: string) {
 }
 
 function formatVnpayDate(date: Date) {
+  // VNPay expects yyyyMMddHHmmss in Vietnam time (UTC+7), not server local time.
   const vnDate = new Date(date.getTime() + 7 * 60 * 60 * 1000);
   const yyyy = vnDate.getUTCFullYear();
   const MM = String(vnDate.getUTCMonth() + 1).padStart(2, "0");
@@ -114,4 +144,42 @@ function formatVnpayDate(date: Date) {
   const mm = String(vnDate.getUTCMinutes()).padStart(2, "0");
   const ss = String(vnDate.getUTCSeconds()).padStart(2, "0");
   return `${yyyy}${MM}${dd}${HH}${mm}${ss}`;
+}
+
+function resolveReturnUrl(origin: string) {
+  const configuredReturnUrl = process.env.VNPAY_RETURN_URL?.trim();
+  if (configuredReturnUrl) {
+    const localOriginReturnUrl = resolveLocalDevReturnUrl(configuredReturnUrl, origin);
+    return localOriginReturnUrl ?? configuredReturnUrl;
+  }
+
+  const publicSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const baseUrl = publicSiteUrl || origin;
+  return `${baseUrl.replace(/\/$/, "")}/api/payment/vnpay/return`;
+}
+
+function resolveLocalDevReturnUrl(configuredReturnUrl: string, origin: string) {
+  try {
+    const configured = new URL(configuredReturnUrl);
+    const requestOrigin = new URL(origin);
+    const configuredLocal = configured.hostname === "localhost" || configured.hostname === "127.0.0.1";
+    const requestLocal = requestOrigin.hostname === "localhost" || requestOrigin.hostname === "127.0.0.1";
+    if (!configuredLocal || !requestLocal || configured.origin === requestOrigin.origin) return null;
+
+    console.warn("[vnpay]", {
+      event: "local-return-url-port-mismatch",
+      configuredReturnUrl,
+      requestOrigin: requestOrigin.origin,
+    });
+    return `${requestOrigin.origin}/api/payment/vnpay/return`;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeIpAddress(ipAddress: string) {
+  const normalized = ipAddress.trim();
+  if (!normalized) return "127.0.0.1";
+  if (normalized.startsWith("::ffff:")) return normalized.slice(7);
+  return normalized === "::1" ? "127.0.0.1" : normalized;
 }
