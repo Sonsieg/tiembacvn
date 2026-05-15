@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Banknote, Check, CreditCard, Landmark, PackageCheck, ShieldCheck, Truck } from "lucide-react";
@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/toast";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validations/checkout";
 import { useCartStore } from "@/store/cart.store";
 import { cn } from "@/lib/utils/format";
+import { saveLocalOrder } from "@/lib/client/order-history";
 
 export function CheckoutForm() {
   const router = useRouter();
@@ -34,6 +35,15 @@ export function CheckoutForm() {
   });
   const paymentMethod = useWatch({ control: form.control, name: "paymentMethod" });
   const canSubmit = items.length > 0 && !loading;
+  const { setValue } = form;
+
+  useEffect(() => {
+    setValue(
+      "items",
+      items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity })),
+    );
+    setValue("couponCode", couponCode);
+  }, [couponCode, items, setValue]);
 
   async function submit(values: CheckoutInput) {
     if (loading) return;
@@ -59,6 +69,7 @@ export function CheckoutForm() {
         return;
       }
       toast({ tone: "success", title: "Đã tạo đơn hàng", description: `Mã đơn ${data.order.orderNumber}.` });
+      saveLocalOrder(data.order, values.customer.phone);
       clearCart();
       if (data.paymentUrl) {
         window.location.assign(data.paymentUrl);

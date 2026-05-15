@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { CheckCircle2 } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { OrderHistorySync } from "@/components/checkout/order-history-sync";
 import { formatCurrency } from "@/lib/utils/format";
 import { getOrderById } from "@/lib/services/order.service";
 
@@ -16,6 +17,7 @@ export default async function OrderSuccessPage({ searchParams }: { searchParams:
   const paymentLabel = order?.paymentStatus === "paid" || payment === "paid" ? "Đã thanh toán" : payment === "failed" ? "Thanh toán thất bại" : "Chờ thanh toán";
   return (
     <section className="section">
+      <OrderHistorySync order={order} />
       <div className="container-page max-w-3xl">
         <Card className="grid place-items-center p-8 text-center md:p-12">
           <CheckCircle2 className="h-16 w-16 text-emerald-600" />

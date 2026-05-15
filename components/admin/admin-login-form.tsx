@@ -56,25 +56,31 @@ export function AdminLoginForm({ styles }: { styles: LoginStyles }) {
     setError("");
     setLoading(true);
 
-    const response = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
 
-    setLoading(false);
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const message = data.error ?? "Không thể đăng nhập";
+        setError(message);
+        toast({ tone: "danger", title: "Đăng nhập thất bại", description: message });
+        return;
+      }
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      const message = data.error ?? "Không thể đăng nhập";
+      toast({ tone: "success", title: "Đăng nhập thành công", description: "Đang chuyển vào trang quản trị." });
+      router.replace("/admin/dashboard");
+      router.refresh();
+    } catch {
+      const message = "Không thể kết nối để đăng nhập. Vui lòng thử lại.";
       setError(message);
       toast({ tone: "danger", title: "Đăng nhập thất bại", description: message });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    toast({ tone: "success", title: "Đăng nhập thành công", description: "Đang chuyển vào trang quản trị." });
-    router.replace("/admin/dashboard");
-    router.refresh();
   }
 
   return (
@@ -109,7 +115,7 @@ export function AdminLoginForm({ styles }: { styles: LoginStyles }) {
           </span>
         </label>
         {error ? <p className={styles.error}>{error}</p> : null}
-        <button className={styles.button} disabled={!canSubmit}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</button>
+        <button type="submit" className={styles.button} disabled={!canSubmit}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</button>
       </div>
       {isDevelopment ? (
         <p className={styles.hint}>
